@@ -166,9 +166,19 @@ map.setView([lat,lng],17);
 
 let terdekat=null,jarakMin=999999;
 dataESDM.forEach(d=>{
-let j=hitungJarak(lat,lng,d.lat_awal,d.lng_awal);
-if(j<jarakMin){jarakMin=j;terdekat=d;}
+  let lat0 = parseFloat(String(d.lat_awal).replace(",", "."));
+  let lng0 = parseFloat(String(d.lng_awal).replace(",", "."));
+
+  if (!isNaN(lat0) && !isNaN(lng0)) {
+    let j = hitungJarak(lat, lng, lat0, lng0);
+
+    if (j < jarakMin) {
+      jarakMin = j;
+      terdekat = d;
+    }
+  }
 });
+
 
 formVerval.classList.remove("hidden");
 
