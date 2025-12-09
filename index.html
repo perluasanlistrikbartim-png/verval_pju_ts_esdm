@@ -106,7 +106,22 @@ function renderTabel(){
 let html="";
 dataESDM.forEach(r=>{
 let link=`<a href="https://maps.google.com?q=${r.lat_awal},${r.lng_awal}" target="_blank">${r.lat_awal},${r.lng_awal}</a>`;
-html+=`<tr id="row${r.rowIndex}"><td>${r.id_barang}</td><td>${r.nama_kecamatan}</td><td>${r.nama_desa_lokasi}</td><td>${link}</td><td>${r.status_validasi}</td></tr>`;
+let fotoLink = r.link_foto_verval 
+  ? `<a href="${r.link_foto_verval}" target="_blank">📷 Lihat</a>` 
+  : "-";
+
+html+=`<tr id="row${r.rowIndex}">
+  <td>${r.id_barang||""}</td>
+  <td>${r.nama_kecamatan||""}</td>
+  <td>${r.nama_desa_lokasi||""}</td>
+  <td>${linkMap}</td>
+  <td>${r.status_validasi||""}</td>
+  <td>${r.keterangan_wawancara||""}</td>
+  <td>${r.catatan_fisik||""}</td>
+  <td>${fotoLink}</td>
+  <td>${r.waktu_simpan||""}</td>
+</tr>`;
+
 });
 tabelEsdm.querySelector("tbody").innerHTML=html;
 }
