@@ -13,7 +13,8 @@ header{background:#0f1b35;padding:12px;text-align:center;font-weight:bold}
 .container{padding:10px}
 
 select,input,textarea,button{
-  width:100%;padding:8px;margin-top:6px;border-radius:6px;border:none
+  width:100%;padding:8px;margin-top:6px;border-radius:6px;border:none;
+  box-sizing:border-box;
 }
 button{background:#00c2ff;color:#000;font-weight:bold;cursor:pointer}
 button:hover{opacity:0.9}
@@ -28,6 +29,12 @@ tr.active{background:#2b7cff;color:#fff}
 .readonly{background:#222;color:#aaa}
 .hidden{display:none}
 .box{background:#141f3d;padding:10px;border-radius:10px;margin-top:12px}
+
+/* sedikit bantu tampilan di HP kecil */
+@media (max-width: 600px){
+  table{font-size:11px}
+  th,td{padding:4px}
+}
 </style>
 </head>
 
@@ -69,8 +76,8 @@ tr.active{background:#2b7cff;color:#fff}
 <button onclick="ambilLokasi()">📍 Ambil Posisi Saya</button>
 
 <label>Atau Input Manual</label>
-<input id="latManual" placeholder="Latitude">
-<input id="lngManual" placeholder="Longitude">
+<input id="latManual" placeholder="Latitude (desimal)">
+<input id="lngManual" placeholder="Longitude (desimal)">
 <button onclick="prosesManual()">Proses Koordinat</button>
 
 <div class="box hidden" id="formVerval">
@@ -83,14 +90,14 @@ tr.active{background:#2b7cff;color:#fff}
 <input id="nama_kecamatan" placeholder="Nama Kecamatan">
 <input id="nama_desa_lokasi" placeholder="Nama Desa/Lokasi">
 
-<input id="lat_awal" class="readonly" readonly>
-<input id="lng_awal" class="readonly" readonly>
+<input id="lat_awal" class="readonly" readonly placeholder="Lat awal">
+<input id="lng_awal" class="readonly" readonly placeholder="Lng awal">
 
-<input id="lat_verval" class="readonly" readonly>
-<input id="lng_verval" class="readonly" readonly>
+<input id="lat_verval" class="readonly" readonly placeholder="Lat verval">
+<input id="lng_verval" class="readonly" readonly placeholder="Lng verval">
 
-<input id="jarak" class="readonly" readonly>
-<input id="status_validasi" class="readonly" readonly>
+<input id="jarak" class="readonly" readonly placeholder="Jarak (m)">
+<input id="status_validasi" class="readonly" readonly placeholder="Status Validasi">
 
 <input id="petugas" placeholder="Petugas Verifikasi">
 
@@ -143,174 +150,215 @@ function parseAngka(x){
 tahunSelect.onchange=loadTahun;
 
 function loadTahun(){
-if(!tahunSelect.value){
-  tabelEsdm.querySelector("tbody").innerHTML="";
-  layerESDM.clearLayers();
-  return;
+  if(!tahunSelect.value){
+    tabelEsdm.querySelector("tbody").innerHTML="";
+    layerESDM.clearLayers();
+    return;
+  }
+
+  fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
+    .then(r=>r.json())
+    .then(d=>{
+      dataESDM=d.data||[];
+      renderTabel();
+      renderPeta();
+    });
 }
 
-fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
-.then(r=>r.json()).then(d=>{
-dataESDM=d.data||[];
-renderTabel();
-renderPeta();
-});
-}
 
 function renderTabel(){
-let html="";
-dataESDM.forEach(r=>{
-html+=`<tr id="row${r.rowIndex}">
-<td>${r.id_barang||""}</td>
-<td>${r.nama_kecamatan||""}</td>
-<td>${r.nama_desa_lokasi||""}</td>
-<td>${r.koordinat_awal_lat}</td>
-<td>${r.koordinat_awal_lng}</td>
-<td>${r.status_validasi||""}</td>
-</tr>`;
-});
-tabelEsdm.querySelector("tbody").innerHTML=html;
+  let html="";
+  dataESDM.forEach(r=>{
+
+    // konversi aman koma -> titik
+    let lat = parseAngka(r.lat_awal);
+    let lng = parseAngka(r.lng_awal);
+
+    let linkMap = (!isNaN(lat) && !isNaN(lng)) 
+      ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:#00c2ff;text-decoration:none">
+          ${lat}, ${lng}
+        </a>`
+      : `-`;
+
+    html+=`<tr id="row${r.rowIndex}">
+      <td>${r.id_barang||""}</td>
+      <td>${r.nama_kecamatan||""}</td>
+      <td>${r.nama_desa_lokasi||""}</td>
+      <td>${linkMap}</td>
+      <td>${r.status_validasi||""}</td>
+    </tr>`;
+  });
+
+  tabelEsdm.querySelector("tbody").innerHTML=html;
 }
+
+
 
 function renderPeta(){
-layerESDM.clearLayers();
+  layerESDM.clearLayers();
 
-dataESDM.forEach(d=>{
-let lat=parseAngka(d.koordinat_awal_lat);
-let lng=parseAngka(d.koordinat_awal_lng);
+  dataESDM.forEach(d=>{
+    let lat=parseAngka(d.lat_awal);
+    let lng=parseAngka(d.lng_awal);
 
-if(!isNaN(lat)&&!isNaN(lng)){
-let m=L.marker([lat,lng],{icon:iconESDM}).addTo(layerESDM);
+    if(!isNaN(lat)&&!isNaN(lng)){
+      let m=L.marker([lat,lng],{icon:iconESDM}).addTo(layerESDM);
 
-m.on("click",()=>{
-  tandaiBaris(d.rowIndex);
-  isiFormESDM(d,lat,lng,0);
-});
-}
-});
+      m.on("click",()=>{
+        tandaiBaris(d.rowIndex);
+        // klik marker: isi form dengan posisi target (jarak 0)
+        isiFormESDM(d,lat,lng,0);
+      });
+    }
+  });
 }
 
 function tandaiBaris(rowIndex){
-document.querySelectorAll("#tabelEsdm tr").forEach(tr=>{
-tr.classList.remove("active");
-});
-let tr=document.getElementById("row"+rowIndex);
-if(tr) tr.classList.add("active");
+  document.querySelectorAll("#tabelEsdm tbody tr").forEach(tr=>{
+    tr.classList.remove("active");
+  });
+  let tr=document.getElementById("row"+rowIndex);
+  if(tr) tr.classList.add("active");
 }
 
 /* ================= INPUT LOKASI ================= */
 
 function ambilLokasi(){
-navigator.geolocation.getCurrentPosition(p=>{
-prosesTitik(p.coords.latitude,p.coords.longitude);
-});
+  if(!navigator.geolocation){
+    alert("Geolocation tidak didukung di perangkat ini.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(p=>{
+    prosesTitik(p.coords.latitude,p.coords.longitude);
+  },err=>{
+    alert("Gagal mengambil lokasi GPS.");
+  });
 }
 
 function prosesManual(){
-prosesTitik(parseFloat(latManual.value),parseFloat(lngManual.value));
+  const lat=parseFloat(latManual.value);
+  const lng=parseFloat(lngManual.value);
+  if(isNaN(lat)||isNaN(lng)){
+    alert("Koordinat manual tidak valid.");
+    return;
+  }
+  prosesTitik(lat,lng);
 }
 
 function prosesTitik(lat,lng){
-if(markerSaya)map.removeLayer(markerSaya);
-markerSaya=L.marker([lat,lng]).addTo(map);
-map.setView([lat,lng],17);
+  if(markerSaya)map.removeLayer(markerSaya);
+  markerSaya=L.marker([lat,lng]).addTo(map);
+  map.setView([lat,lng],17);
 
-let terdekat=null;
-let jarakMin=999999;
+  let terdekat=null;
+  let jarakMin=999999;
 
-dataESDM.forEach(d=>{
-let lat0=parseAngka(d.koordinat_awal_lat);
-let lng0=parseAngka(d.koordinat_awal_lng);
+  dataESDM.forEach(d=>{
+    let lat0=parseAngka(d.lat_awal);
+    let lng0=parseAngka(d.lng_awal);
 
-if(!isNaN(lat0)&&!isNaN(lng0)){
-let j=hitungJarak(lat,lng,lat0,lng0);
-if(j<jarakMin){
-jarakMin=j;
-terdekat=d;
-}
-}
-});
+    if(!isNaN(lat0)&&!isNaN(lng0)){
+      let j=hitungJarak(lat,lng,lat0,lng0);
+      if(j<jarakMin){
+        jarakMin=j;
+        terdekat=d;
+      }
+    }
+  });
 
-formVerval.classList.remove("hidden");
+  formVerval.classList.remove("hidden");
 
-if(terdekat && jarakMin<=100){
-  tandaiBaris(terdekat.rowIndex);
-  isiFormESDM(terdekat,lat,lng,jarakMin);
-}else{
-  isiFormNonESDM(lat,lng);
-}
+  if(terdekat && jarakMin<=100){
+    tandaiBaris(terdekat.rowIndex);
+    isiFormESDM(terdekat,lat,lng,jarakMin);
+  }else{
+    isiFormNonESDM(lat,lng);
+  }
 }
 
 /* ================= FORM ================= */
 
 function isiFormESDM(d,lat,lng,jarak){
-tahun.value=tahunSelect.value;
-rowIndex.value=d.rowIndex;
-id_barang.value=d.id_barang;
+  tahun.value=tahunSelect.value;
+  rowIndex.value=d.rowIndex;
+  id_barang.value=d.id_barang;
 
-nama_kecamatan.value=d.nama_kecamatan||"";
-nama_desa_lokasi.value=d.nama_desa_lokasi||"";
-nama_kecamatan.readOnly=true;
-nama_desa_lokasi.readOnly=true;
+  nama_kecamatan.value=d.nama_kecamatan||"";
+  nama_desa_lokasi.value=d.nama_desa_lokasi||"";
+  nama_kecamatan.readOnly=true;
+  nama_desa_lokasi.readOnly=true;
 
-lat_awal.value=d.koordinat_awal_lat;
-lng_awal.value=d.koordinat_awal_lng;
+  lat_awal.value=d.lat_awal;
+  lng_awal.value=d.lng_awal;
 
-lat_verval.value=lat;
-lng_verval.value=lng;
-jarak.value=jarak.toFixed(1);
-status_validasi.value=jarak<30?"Valid":"Suspect / Bergeser";
+  lat_verval.value=lat;
+  lng_verval.value=lng;
+  jarak.value=jarak.toFixed(1);
+  status_validasi.value=jarak<30?"Valid":"Suspect / Bergeser";
 }
 
 function isiFormNonESDM(lat,lng){
-tahun.value="NON-ESDM";
-rowIndex.value="";
-id_barang.value="";
+  tahun.value="NON-ESDM";
+  rowIndex.value="";
+  id_barang.value="";
 
-nama_kecamatan.readOnly=false;
-nama_desa_lokasi.readOnly=false;
+  nama_kecamatan.readOnly=false;
+  nama_desa_lokasi.readOnly=false;
+  nama_kecamatan.value="";
+  nama_desa_lokasi.value="";
 
-lat_awal.value="";
-lng_awal.value="";
+  lat_awal.value="";
+  lng_awal.value="";
 
-lat_verval.value=lat;
-lng_verval.value=lng;
-jarak.value="";
-status_validasi.value="Non-ESDM";
+  lat_verval.value=lat;
+  lng_verval.value=lng;
+  jarak.value="";
+  status_validasi.value="Non-ESDM";
 }
 
 /* ================= KIRIM ================= */
 
 function kirimVerval(){
-let payload={
-action:status_validasi.value==="Non-ESDM"?"temuan_lapangan":"verval_esdm",
-rowIndex:rowIndex.value,
-tahun_perolehan_aset_esdm:tahun.value,
-id_barang:id_barang.value,
-petugas_verval:petugas.value,
-koordinat_verval_lat:lat_verval.value,
-koordinat_verval_lng:lng_verval.value,
-status_fisik:status_fisik.value,
-metode_verifikasi:metode.value,
-nama_narasumber:narasumber.value,
-keterangan_wawancara:ket_wawancara.value,
-catatan_fisik:catatan.value
-};
+  if(!lat_verval.value || !lng_verval.value){
+    alert("Koordinat verval belum diisi.");
+    return;
+  }
 
-fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
-.then(r=>r.json()).then(d=>{
-alert(d.message);
-location.reload();
-});
+  let payload={
+    action: status_validasi.value==="Non-ESDM" ? "temuan_lapangan" : "verval_esdm",
+    rowIndex: rowIndex.value,
+    // untuk temuan_lapangan dipakai, untuk verval_esdm diabaikan
+    tahun_perolehan: tahun.value,
+    id_barang: id_barang.value,
+    petugas_verval: petugas.value,
+    koordinat_verval_lat: lat_verval.value,
+    koordinat_verval_lng: lng_verval.value,
+    status_fisik: status_fisik.value,
+    metode_verifikasi: metode.value,
+    nama_narasumber: narasumber.value,
+    keterangan_wawancara: ket_wawancara.value,
+    catatan_fisik: catatan.value,
+    nama_kecamatan: nama_kecamatan.value,
+    nama_desa_lokasi: nama_desa_lokasi.value,
+    keterangan_awal: catatan.value || "Temuan Lapangan"
+  };
+
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(d=>{
+      alert(d.message || "Tersimpan.");
+      location.reload();
+    })
+    .catch(()=>alert("Gagal mengirim data."));
 }
 
 /* ================= JARAK ================= */
 
 function hitungJarak(a,b,c,d){
-const R=6371000,rad=Math.PI/180;
-let dLat=(c-a)*rad,dLng=(d-b)*rad;
-let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
-return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+  const R=6371000,rad=Math.PI/180;
+  let dLat=(c-a)*rad,dLng=(d-b)*rad;
+  let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
+  return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
 }
 </script>
 
