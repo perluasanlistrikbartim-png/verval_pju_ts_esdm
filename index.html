@@ -402,63 +402,56 @@ function isiFormNonESDM(lat,lng){
 /* ============== KIRIM VERVAL ============== */
 
 function kirimVerval(){
-  if(!lat_verval.value || !lng_verval.value){
-    alert("Koordinat verval belum diisi.");
+  if(!rowIndex.value){
+    alert("❌ Pilih dulu titik ESDM di peta!");
     return;
   }
 
   const fileInput = document.getElementById("foto_verval");
   const file = fileInput.files[0];
-  if(!file){
-    alert("⚠️ Foto verval WAJIB diupload!");
+
+  if (!file) {
+    alert("❌ Foto WAJIB diupload!");
     return;
   }
 
   const reader = new FileReader();
-  reader.onload = function(){
+
+  reader.onload = function () {
     const base64Data = reader.result.split(",")[1];
 
     const payload = {
-      rowIndex: rowIndex.value,  // kalau kosong → temuan Non-ESDM
-
-      // DATA VERSI LAPANGAN
+      action: "verval_esdm",
+      rowIndex: rowIndex.value,
       petugas_verval: petugas.value,
       status_fisik: status_fisik.value,
-      metode_verifikasi: metode.value,
-      nama_narasumber: narasumber.value,
-      keterangan_wawancara: ket_wawancara.value,
       catatan_fisik: catatan.value,
-
-      nama_kecamatan: nama_kecamatan.value,
-      nama_desa_lokasi: nama_desa_lokasi.value,
-      keterangan_awal: catatan.value || "Temuan Lapangan",
-
-      koordinat_verval_lat: lat_verval.value,
-      koordinat_verval_lng: lng_verval.value,
-
-      // FOTO
       foto_base64: base64Data,
       foto_nama: file.name,
       foto_tipe: file.type
     };
 
-    fetch(SCRIPT_URL,{
-      method:"POST",
-      body:JSON.stringify(payload)
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     })
-    .then(r=>r.json())
-    .then(d=>{
-      alert(d.message || "Data & Foto berhasil disimpan.");
-      loadTahun();
-      loadVerval();
-      formVerval.classList.add("hidden");
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message || "✅ Data berhasil disimpan");
+      location.reload();
     })
-    .catch(()=>{
+    .catch(err => {
+      console.error("FETCH ERROR:", err);
       alert("❌ Gagal mengirim data ke server.");
     });
   };
+
   reader.readAsDataURL(file);
 }
+
 
 /* ============== JARAK ============== */
 
