@@ -135,21 +135,25 @@ tabelEsdm.querySelector("tbody").innerHTML=html;
 }
 
 function renderPeta(){
-  layerESDM.clearLayers();
+  if(markerESDM) markerESDM.clearLayers();
+  markerESDM = L.layerGroup().addTo(map);
 
   dataESDM.forEach(d=>{
-    if(d.lat_awal && d.lng_awal){
+  let lat0 = parseFloat(String(d.lat_awal).replace(",", "."));
+  let lng0 = parseFloat(String(d.lng_awal).replace(",", "."));
 
-      // ✅ KONVERSI FORMAT INDONESIA → FORMAT INTERNASIONAL
-      let lat = parseFloat(String(d.lat_awal).replace(",", "."));
-      let lng = parseFloat(String(d.lng_awal).replace(",", "."));
+  if (!isNaN(lat0) && !isNaN(lng0)) {
+    let j = hitungJarak(lat, lng, lat0, lng0);
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-        L.marker([lat, lng]).addTo(layerESDM);
-      }
+    if (j < jarakMin) {
+      jarakMin = j;
+      terdekat = d;
     }
-  });
+  }
+});
+
 }
+
 
 
 function ambilLokasi(){
