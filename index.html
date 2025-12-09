@@ -4,374 +4,156 @@
 <meta charset="UTF-8">
 <title>Verval PJU TS ESDM – Barito Timur</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-
 <style>
 body{font-family:Arial;margin:0;background:#0b1220;color:#fff}
 header{background:#0f1b35;padding:12px;text-align:center;font-weight:bold}
 .container{padding:10px}
-
-select,input,textarea,button{
-  width:100%;padding:8px;margin-top:6px;border-radius:6px;border:none;
-  box-sizing:border-box;
-}
+select,input,textarea,button{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:none;box-sizing:border-box}
 button{background:#00c2ff;color:#000;font-weight:bold;cursor:pointer}
-button:hover{opacity:0.9}
-
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
 th,td{border:1px solid #444;padding:6px}
 th{background:#12244b}
 tr.active{background:#2b7cff;color:#fff}
-
 #map{height:360px;margin-top:10px;border-radius:10px}
-
 .readonly{background:#222;color:#aaa}
 .hidden{display:none}
 .box{background:#141f3d;padding:10px;border-radius:10px;margin-top:12px}
-
-/* sedikit bantu tampilan di HP kecil */
-@media (max-width: 600px){
-  table{font-size:11px}
-  th,td{padding:4px}
-}
 </style>
 </head>
-
 <body>
 
-<header>
-✅ SISTEM VERIFIKASI LAPANGAN PJU TS ESDM – BARITO TIMUR
-</header>
-
+<header>✅ SISTEM VERIFIKASI LAPANGAN PJU TS ESDM – BARITO TIMUR</header>
 <div class="container">
 
 <label>Pilih Tahun Perolehan</label>
 <select id="tahunSelect">
-  <option value="">-- Pilih Tahun --</option>
-  <option value="2021">2021</option>
-  <option value="2022">2022</option>
-  <option value="2023">2023</option>
+<option value="">-- Pilih Tahun --</option>
+<option>2021</option><option>2022</option><option>2023</option>
 </select>
 
 <div class="box">
-<b>Data Target ESDM (Read Only)</b>
+<b>Data Target ESDM</b>
 <table id="tabelEsdm">
 <thead>
-<tr>
-  <th>ID</th>
-  <th>Kecamatan</th>
-  <th>Desa/Lokasi</th>
-  <th>Koordinat (Google Maps)</th>
-  <th>Status</th>
-</tr>
-</thead>
-
-<tbody></tbody>
+<tr><th>ID</th><th>Kecamatan</th><th>Desa</th><th>Koordinat</th><th>Status</th></tr>
+</thead><tbody></tbody>
 </table>
 </div>
 
 <div id="map"></div>
-
 <button onclick="ambilLokasi()">📍 Ambil Posisi Saya</button>
-
-<label>Atau Input Manual</label>
-<input id="latManual" placeholder="Latitude (desimal)">
-<input id="lngManual" placeholder="Longitude (desimal)">
-<button onclick="prosesManual()">Proses Koordinat</button>
+<input id="latManual" placeholder="Latitude">
+<input id="lngManual" placeholder="Longitude">
+<button onclick="prosesManual()">Proses Manual</button>
 
 <div class="box hidden" id="formVerval">
-<b>Form Verifikasi Lapangan</b>
-
-<input id="tahun" class="readonly" readonly>
+<b>Form Verifikasi</b>
 <input id="rowIndex" class="readonly" readonly>
 <input id="id_barang" class="readonly" readonly>
+<input id="petugas" placeholder="Petugas">
+<select id="status_fisik"><option>Baik</option><option>Rusak</option><option>Hilang</option></select>
+<textarea id="catatan"></textarea>
+<label>Upload Foto</label>
+<input type="file" id="foto_verval" accept="image/*" capture>
+<button onclick="kirimVerval()">💾 SIMPAN</button>
+</div>
 
-<input id="nama_kecamatan" placeholder="Nama Kecamatan">
-<input id="nama_desa_lokasi" placeholder="Nama Desa/Lokasi">
-
-<input id="lat_awal" class="readonly" readonly placeholder="Lat awal">
-<input id="lng_awal" class="readonly" readonly placeholder="Lng awal">
-
-<input id="lat_verval" class="readonly" readonly placeholder="Lat verval">
-<input id="lng_verval" class="readonly" readonly placeholder="Lng verval">
-
-<input id="jarak" class="readonly" readonly placeholder="Jarak (m)">
-<input id="status_validasi" class="readonly" readonly placeholder="Status Validasi">
-
-<input id="petugas" placeholder="Petugas Verifikasi">
-
-<select id="status_fisik">
-<option value="">Status Fisik</option>
-<option>Baik</option>
-<option>Rusak</option>
-<option>Hilang</option>
-</select>
-
-<select id="metode">
-<option value="">Metode Verifikasi</option>
-<option>Visual</option>
-<option>Wawancara</option>
-</select>
-
-<input id="narasumber" placeholder="Nama Narasumber">
-<textarea id="ket_wawancara" placeholder="Keterangan Wawancara"></textarea>
-<textarea id="catatan" placeholder="Catatan Fisik"></textarea>
-
-<button onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
+<div class="box">
+<b>✅ Data Hasil Verifikasi</b>
+<table id="tabelVerval">
+<thead>
+<tr><th>ID</th><th>Lokasi</th><th>Status</th><th>Petugas</th></tr>
+</thead><tbody></tbody>
+</table>
 </div>
 
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxJ4ynM5FieQC8w5zVairtshkDoWOgyxnryEUSsx8cT3xH6rSGyKZsENeviu1a9E4JrZg/exec";
+const SCRIPT_URL="PASTE_URL_APPSCRIPT_MU_DI_SINI";
 
-let dataESDM=[];
 let map=L.map('map').setView([-2.13,115.10],10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-let markerSaya;
-let layerESDM=L.layerGroup().addTo(map);
+let dataESDM=[],markerSaya,layerESDM=L.layerGroup().addTo(map);
 
-const iconESDM = L.icon({
-  iconUrl: './esdm.png',
-  iconSize: [34, 34],
-  iconAnchor: [17, 34],
-  popupAnchor: [0, -34]
-});
+const iconESDM=L.icon({iconUrl:'./esdm.png',iconSize:[32,32]});
+const iconBARTIM=L.icon({iconUrl:'./bartim.png',iconSize:[36,36]});
 
-const iconBARTIM = L.icon({
-  iconUrl: './bartim.png',
-  iconSize: [38, 38],
-  iconAnchor: [19, 38],
-  popupAnchor: [0, -38]
-});
-
-
-
-function parseAngka(x){
-  if(x==null) return NaN;
-  return parseFloat(String(x).replace(",","."));
-}
-
-/* ================= LOAD DATA ================= */
+function parseAngka(x){return parseFloat(String(x).replace(",", "."));}
 
 tahunSelect.onchange=loadTahun;
 
 function loadTahun(){
-  if(!tahunSelect.value){
-    tabelEsdm.querySelector("tbody").innerHTML="";
-    layerESDM.clearLayers();
-    return;
-  }
-
-  fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
-    .then(r=>r.json())
-    .then(d=>{
-      dataESDM=d.data||[];
-      renderTabel();
-      renderPeta();
-    });
+fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
+.then(r=>r.json()).then(d=>{dataESDM=d.data||[];renderTabel();renderPeta();});
 }
-
 
 function renderTabel(){
-  let html="";
-  dataESDM.forEach(r=>{
-
-    // konversi aman koma -> titik
-    let lat = parseAngka(r.lat_awal);
-    let lng = parseAngka(r.lng_awal);
-
-    let linkMap = (!isNaN(lat) && !isNaN(lng)) 
-      ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:#00c2ff;text-decoration:none">
-          ${lat}, ${lng}
-        </a>`
-      : `-`;
-
-    html+=`<tr id="row${r.rowIndex}">
-      <td>${r.id_barang||""}</td>
-      <td>${r.nama_kecamatan||""}</td>
-      <td>${r.nama_desa_lokasi||""}</td>
-      <td>${linkMap}</td>
-      <td>${r.status_validasi||""}</td>
-    </tr>`;
-  });
-
-  tabelEsdm.querySelector("tbody").innerHTML=html;
+let html="";
+dataESDM.forEach(r=>{
+let link=`<a href="https://maps.google.com?q=${r.lat_awal},${r.lng_awal}" target="_blank">${r.lat_awal},${r.lng_awal}</a>`;
+html+=`<tr id="row${r.rowIndex}"><td>${r.id_barang}</td><td>${r.nama_kecamatan}</td><td>${r.nama_desa_lokasi}</td><td>${link}</td><td>${r.status_validasi}</td></tr>`;
+});
+tabelEsdm.querySelector("tbody").innerHTML=html;
 }
-
-
 
 function renderPeta(){
-  layerESDM.clearLayers();
-
-  dataESDM.forEach(d=>{
-    let lat=parseAngka(d.lat_awal);
-    let lng=parseAngka(d.lng_awal);
-
-    if(!isNaN(lat)&&!isNaN(lng)){
-      let m=L.marker([lat,lng],{icon:iconESDM}).addTo(layerESDM);
-
-      m.on("click",()=>{
-        tandaiBaris(d.rowIndex);
-        // klik marker: isi form dengan posisi target (jarak 0)
-        isiFormESDM(d,lat,lng,0);
-      });
-    }
-  });
+layerESDM.clearLayers();
+dataESDM.forEach(d=>{
+let lat=parseAngka(d.lat_awal),lng=parseAngka(d.lng_awal);
+if(!isNaN(lat)&&!isNaN(lng)){
+let m=L.marker([lat,lng],{icon:iconESDM}).addTo(layerESDM);
+m.on("click",()=>{rowIndex.value=d.rowIndex;id_barang.value=d.id_barang;formVerval.classList.remove("hidden");});
+}});
 }
-
-function tandaiBaris(rowIndex){
-  document.querySelectorAll("#tabelEsdm tbody tr").forEach(tr=>{
-    tr.classList.remove("active");
-  });
-  let tr=document.getElementById("row"+rowIndex);
-  if(tr) tr.classList.add("active");
-}
-
-/* ================= INPUT LOKASI ================= */
 
 function ambilLokasi(){
-  if(!navigator.geolocation){
-    alert("Geolocation tidak didukung di perangkat ini.");
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(p=>{
-    prosesTitik(p.coords.latitude,p.coords.longitude);
-  },err=>{
-    alert("Gagal mengambil lokasi GPS.");
-  });
+navigator.geolocation.getCurrentPosition(p=>{
+if(markerSaya)map.removeLayer(markerSaya);
+markerSaya=L.marker([p.coords.latitude,p.coords.longitude],{icon:iconBARTIM}).addTo(map);
+});
 }
 
 function prosesManual(){
-  const lat=parseFloat(latManual.value);
-  const lng=parseFloat(lngManual.value);
-  if(isNaN(lat)||isNaN(lng)){
-    alert("Koordinat manual tidak valid.");
-    return;
-  }
-  prosesTitik(lat,lng);
+ambilLokasi();
 }
-
-function prosesTitik(lat,lng){
-  if(markerSaya)map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat, lng], { icon: iconBARTIM }).addTo(map);
-  map.setView([lat,lng],17);
-
-  let terdekat=null;
-  let jarakMin=999999;
-
-  dataESDM.forEach(d=>{
-    let lat0=parseAngka(d.lat_awal);
-    let lng0=parseAngka(d.lng_awal);
-
-    if(!isNaN(lat0)&&!isNaN(lng0)){
-      let j=hitungJarak(lat,lng,lat0,lng0);
-      if(j<jarakMin){
-        jarakMin=j;
-        terdekat=d;
-      }
-    }
-  });
-
-  formVerval.classList.remove("hidden");
-
-  if(terdekat && jarakMin<=100){
-    tandaiBaris(terdekat.rowIndex);
-    isiFormESDM(terdekat,lat,lng,jarakMin);
-  }else{
-    isiFormNonESDM(lat,lng);
-  }
-}
-
-/* ================= FORM ================= */
-
-function isiFormESDM(d,lat,lng,jarak){
-  tahun.value=tahunSelect.value;
-  rowIndex.value=d.rowIndex;
-  id_barang.value=d.id_barang;
-
-  nama_kecamatan.value=d.nama_kecamatan||"";
-  nama_desa_lokasi.value=d.nama_desa_lokasi||"";
-  nama_kecamatan.readOnly=true;
-  nama_desa_lokasi.readOnly=true;
-
-  lat_awal.value=d.lat_awal;
-  lng_awal.value=d.lng_awal;
-
-  lat_verval.value=lat;
-  lng_verval.value=lng;
-  jarak.value=jarak.toFixed(1);
-  status_validasi.value=jarak<30?"Valid":"Suspect / Bergeser";
-}
-
-function isiFormNonESDM(lat,lng){
-  tahun.value="NON-ESDM";
-  rowIndex.value="";
-  id_barang.value="";
-
-  nama_kecamatan.readOnly=false;
-  nama_desa_lokasi.readOnly=false;
-  nama_kecamatan.value="";
-  nama_desa_lokasi.value="";
-
-  lat_awal.value="";
-  lng_awal.value="";
-
-  lat_verval.value=lat;
-  lng_verval.value=lng;
-  jarak.value="";
-  status_validasi.value="Non-ESDM";
-}
-
-/* ================= KIRIM ================= */
 
 function kirimVerval(){
-  if(!lat_verval.value || !lng_verval.value){
-    alert("Koordinat verval belum diisi.");
-    return;
-  }
+const file=document.getElementById("foto_verval").files[0];
+if(!file)return alert("Foto wajib!");
 
-  let payload={
-    action: status_validasi.value==="Non-ESDM" ? "temuan_lapangan" : "verval_esdm",
-    rowIndex: rowIndex.value,
-    // untuk temuan_lapangan dipakai, untuk verval_esdm diabaikan
-    tahun_perolehan: tahun.value,
-    id_barang: id_barang.value,
-    petugas_verval: petugas.value,
-    koordinat_verval_lat: lat_verval.value,
-    koordinat_verval_lng: lng_verval.value,
-    status_fisik: status_fisik.value,
-    metode_verifikasi: metode.value,
-    nama_narasumber: narasumber.value,
-    keterangan_wawancara: ket_wawancara.value,
-    catatan_fisik: catatan.value,
-    nama_kecamatan: nama_kecamatan.value,
-    nama_desa_lokasi: nama_desa_lokasi.value,
-    keterangan_awal: catatan.value || "Temuan Lapangan"
-  };
+let reader=new FileReader();
+reader.onload=function(){
+let payload={
+action:"verval_esdm",
+rowIndex:rowIndex.value,
+id_barang:id_barang.value,
+petugas_verval:petugas.value,
+status_fisik:status_fisik.value,
+catatan_fisik:catatan.value,
+foto_base64:reader.result.split(",")[1],
+foto_nama:file.name
+};
 
-  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
-    .then(r=>r.json())
-    .then(d=>{
-      alert(d.message || "Tersimpan.");
-      location.reload();
-    })
-    .catch(()=>alert("Gagal mengirim data."));
+fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
+.then(r=>r.json()).then(d=>{alert(d.message);loadVerval();});
+};
+reader.readAsDataURL(file);
 }
 
-/* ================= JARAK ================= */
-
-function hitungJarak(a,b,c,d){
-  const R=6371000,rad=Math.PI/180;
-  let dLat=(c-a)*rad,dLng=(d-b)*rad;
-  let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
-  return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+function loadVerval(){
+fetch(`${SCRIPT_URL}?action=listVerval`).then(r=>r.json()).then(d=>{
+let html="";
+(d.data||[]).forEach(r=>{
+html+=`<tr><td>${r.id_barang}</td><td>${r.nama_desa_lokasi}</td><td>${r.status_validasi}</td><td>${r.petugas_verval}</td></tr>`;
+});
+tabelVerval.querySelector("tbody").innerHTML=html;
+});
 }
+loadVerval();
 </script>
-
 </body>
 </html>
