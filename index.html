@@ -1,2 +1,256 @@
-<h1>Verval PJU TS ESDM Bartim</h1>
-<p>Halaman siap.</p>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Verval PJU TS ESDM - Barito Timur</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at top, #020617, #000);
+      color: #e5e7eb;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(90deg, #020617, #030712);
+      border-bottom: 1px solid #1f2933;
+      box-shadow: 0 0 25px #0ea5e977 inset;
+    }
+
+    header img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+
+    header div {
+      line-height: 1.2;
+    }
+
+    header .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    header .sub {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(2,6,23,0.95);
+      border-bottom: 1px solid #1f2933;
+      align-items: center;
+    }
+
+    select, button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #1f2933;
+      font-size: 14px;
+      outline: none;
+    }
+
+    select {
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    button {
+      background: linear-gradient(90deg, #0ea5e9, #2563eb);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 0 12px #0ea5e955;
+    }
+
+    button:hover {
+      box-shadow: 0 0 22px #0ea5e9aa;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 150px);
+      z-index: 1;
+    }
+
+    footer {
+      text-align: center;
+      padding: 8px;
+      background: #020617;
+      border-top: 1px solid #1f2933;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .popup-box b {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo-esdm.png" alt="Logo ESDM">
+  <div>
+    <div class="title">Verval PJU TS ESDM</div>
+    <div class="sub">Kabupaten Barito Timur</div>
+  </div>
+</header>
+
+<div class="controls">
+  <label>Pilih Tahun:</label>
+  <select id="filterTahun">
+    <option value="">Semua Tahun</option>
+  </select>
+
+  <button id="btnReload">🔄 Reload</button>
+  <button id="btnLokasi">📍 Ambil Posisi Saya</button>
+</div>
+
+<div id="map"></div>
+
+<footer>
+  © 2025 • Tim Verifikasi & Validasi PJU TS ESDM Barito Timur
+</footer>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+/* ================= KONFIG ================= */
+const CSV_URL = "https://script.google.com/macros/s/AKfycbxJ4ynM5FieQC8w5zVairtshkDoWOgyxnryEUSsx8cT3xH6rSGyKZsENeviu1a9E4JrZg/exec?action=csv";
+
+/* ================= MAP ================= */
+const map = L.map("map").setView([-2.13, 115.10], 9);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19
+}).addTo(map);
+
+const layerMarker = L.layerGroup().addTo(map);
+let markerSaya = null;
+
+/* ================= ICON ESDM ================= */
+const esdmIcon = L.icon({
+  iconUrl: "logo-esdm.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -36]
+});
+
+/* ================= LOAD CSV ================= */
+async function loadCSV() {
+  const tahun = document.getElementById("filterTahun").value;
+  const url = tahun ? `${CSV_URL}&year=${tahun}` : CSV_URL;
+
+  const res = await fetch(url);
+  const text = await res.text();
+
+  const rows = text.split("\n").map(r => r.split(",").map(c => c.replace(/"/g, "")));
+  const header = rows.shift();
+
+  const idx = {
+    tahun: header.indexOf("tahun_perolehan_aset_esdm"),
+    lat: header.indexOf("koordinat_awal_lat"),
+    lng: header.indexOf("koordinat_awal_lng"),
+    status: header.indexOf("status_validasi"),
+    sumber: header.indexOf("sumber_data"),
+    ket: header.indexOf("keterangan_awal")
+  };
+
+  layerMarker.clearLayers();
+
+  rows.forEach(r => {
+    const lat = parseFloat(r[idx.lat]);
+    const lng = parseFloat(r[idx.lng]);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const popup = `
+        <div class="popup-box">
+          <b>Status:</b> ${r[idx.status] || "-"}<br>
+          <b>Sumber:</b> ${r[idx.sumber] || "-"}<br>
+          <b>Keterangan:</b><br>${r[idx.ket] || "-"}
+        </div>
+      `;
+
+      L.marker([lat, lng], { icon: esdmIcon })
+        .addTo(layerMarker)
+        .bindPopup(popup);
+    }
+  });
+}
+
+/* ================= LOAD TAHUN ================= */
+async function loadTahun() {
+  const res = await fetch(CSV_URL);
+  const text = await res.text();
+  const rows = text.split("\n").map(r => r.split(",").map(c => c.replace(/"/g, "")));
+  const header = rows.shift();
+
+  const idxTahun = header.indexOf("tahun_perolehan_aset_esdm");
+  const set = new Set();
+
+  rows.forEach(r => {
+    if (r[idxTahun]) set.add(r[idxTahun]);
+  });
+
+  const select = document.getElementById("filterTahun");
+  select.innerHTML = `<option value="">Semua Tahun</option>`;
+
+  [...set].sort().forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    select.appendChild(opt);
+  });
+}
+
+/* ================= LOKASI SAYA ================= */
+document.getElementById("btnLokasi").onclick = () => {
+  if (!navigator.geolocation) {
+    alert("GPS tidak didukung di perangkat ini.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    if (markerSaya) map.removeLayer(markerSaya);
+
+    markerSaya = L.marker([lat, lng])
+      .addTo(map)
+      .bindPopup("📍 Lokasi Saya").openPopup();
+
+    map.setView([lat, lng], 17);
+  }, () => alert("Gagal mengambil lokasi."));
+};
+
+/* ================= EVENT ================= */
+document.getElementById("btnReload").onclick = loadCSV;
+document.getElementById("filterTahun").onchange = loadCSV;
+
+/* ================= INIT ================= */
+loadTahun();
+loadCSV();
+</script>
+
+</body>
+</html>
