@@ -136,9 +136,20 @@ let markerSaya;
 let layerESDM=L.layerGroup().addTo(map);
 
 const iconESDM = L.icon({
-  iconUrl:'esdm.png',
-  iconSize:[28,28]
+  iconUrl: './esdm.png',
+  iconSize: [34, 34],
+  iconAnchor: [17, 34],
+  popupAnchor: [0, -34]
 });
+
+const iconBARTIM = L.icon({
+  iconUrl: './bartim.png',
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+  popupAnchor: [0, -38]
+});
+
+
 
 function parseAngka(x){
   if(x==null) return NaN;
@@ -247,7 +258,7 @@ function prosesManual(){
 
 function prosesTitik(lat,lng){
   if(markerSaya)map.removeLayer(markerSaya);
-  markerSaya=L.marker([lat,lng]).addTo(map);
+  markerSaya = L.marker([lat, lng], { icon: iconBARTIM }).addTo(map);
   map.setView([lat,lng],17);
 
   let terdekat=null;
