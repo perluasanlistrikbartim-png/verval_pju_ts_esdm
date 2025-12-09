@@ -1,727 +1,258 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Verval PJU TS ESDM - Barito Timur</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Verval PJU TS ESDM – Barito Timur</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+body{font-family:Arial;margin:0;background:#0b1220;color:#fff}
+header{background:#0f1b35;padding:12px;text-align:center;font-weight:bold}
+.container{padding:10px}
+select,input,textarea,button{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:none}
+button{background:#00c2ff;color:#000;font-weight:bold;cursor:pointer}
+button:hover{opacity:0.9}
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-      background: radial-gradient(circle at top, #020617, #000);
-      color: #e5e7eb;
-    }
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+th,td{border:1px solid #444;padding:6px;text-align:left}
+th{background:#12244b}
+tr.active{background:#2b7cff;color:#fff}
+#map{height:320px;margin-top:10px;border-radius:10px}
 
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: linear-gradient(90deg, #020617, #030712);
-      border-bottom: 1px solid #1f2933;
-      box-shadow: 0 0 18px #0ea5e955 inset;
-    }
-
-    header .logo-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    header img {
-      height: 38px;
-      width: auto;
-      object-fit: contain;
-    }
-
-    header .title-block {
-      line-height: 1.2;
-    }
-
-    header .title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #38bdf8;
-    }
-
-    header .sub {
-      font-size: 12px;
-      color: #94a3b8;
-    }
-
-    .controls {
-      padding: 10px 12px;
-      background: rgba(15,23,42,0.96);
-      border-bottom: 1px solid #1f2933;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .controls label {
-      font-size: 13px;
-      color: #cbd5f5;
-    }
-
-    select, button, input {
-      border-radius: 8px;
-      border: 1px solid #1f2933;
-      padding: 6px 10px;
-      font-size: 13px;
-      outline: none;
-    }
-
-    select, input {
-      background: #020617;
-      color: #e5e7eb;
-    }
-
-    button {
-      background: linear-gradient(90deg, #0ea5e9, #2563eb);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 0 12px #0ea5e955;
-      border: none;
-    }
-
-    button:hover {
-      box-shadow: 0 0 20px #0ea5e9aa;
-    }
-
-    .main-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px;
-    }
-
-    #map {
-      width: 100%;
-      height: 320px;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid #1f2933;
-    }
-
-    .panel {
-      background: rgba(15,23,42,0.96);
-      border-radius: 10px;
-      border: 1px solid #1f2933;
-      padding: 10px;
-      margin-top: 4px;
-    }
-
-    .panel-title {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #bae6fd;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .row > div {
-      flex: 1 1 140px;
-    }
-
-    .field-label {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-
-    .info-text {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-top: 4px;
-    }
-
-    #nearestInfo {
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    #nearestInfo span.badge {
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .badge-valid { background:#16a34a33; color:#bbf7d0; border:1px solid #16a34a; }
-    .badge-suspect { background:#f9731633; color:#fed7aa; border:1px solid #f97316; }
-    .badge-non { background:#dc262633; color:#fecaca; border:1px solid #dc2626; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    th, td {
-      padding: 4px 6px;
-      border-bottom: 1px solid #1f2933;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    th {
-      background: #020617;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    tr:nth-child(even) td {
-      background: #020617;
-    }
-
-    tr:nth-child(odd) td {
-      background: #020818;
-    }
-
-    tr.selected-row td {
-      background: #022c22 !important;
-    }
-
-    .table-wrap {
-      max-height: 260px;
-      overflow: auto;
-      border-radius: 8px;
-      border: 1px solid #1f2933;
-    }
-
-    footer {
-      text-align: center;
-      padding: 8px;
-      font-size: 11px;
-      color: #94a3b8;
-      border-top: 1px solid #1f2933;
-      background: #020617;
-    }
-
-    @media (min-width: 900px) {
-      .main-layout {
-        flex-direction: row;
-        align-items: flex-start;
-      }
-      .left-col {
-        flex: 2;
-      }
-      .right-col {
-        flex: 1.5;
-      }
-      #map {
-        height: 420px;
-      }
-    }
-  </style>
+.readonly{background:#222}
+.hidden{display:none}
+.box{background:#141f3d;padding:10px;border-radius:10px;margin-top:12px}
+</style>
 </head>
+
 <body>
 
 <header>
-  <div class="logo-wrap">
-    <img src="bartim.png" alt="Barito Timur">
-    <img src="esdm.png" alt="ESDM">
-  </div>
-  <div class="title-block">
-    <div class="title">Verval PJU TS ESDM</div>
-    <div class="sub">Kabupaten Barito Timur</div>
-  </div>
+✅ SISTEM VERIFIKASI LAPANGAN PJU TS ESDM – BARITO TIMUR
 </header>
 
-<div class="controls">
-  <label for="tahunSelect">Tahun:</label>
-  <select id="tahunSelect">
-    <option value="">Pilih tahun...</option>
-  </select>
+<div class="container">
 
-  <button id="btnReload">🔄 Muat Ulang</button>
+<!-- PILIH TAHUN -->
+<label>Pilih Tahun Perolehan</label>
+<select id="tahunSelect"></select>
 
-  <button id="btnGps">📍 Ambil Posisi Saya</button>
-
-  <div style="flex:1 1 100%;"></div>
-
-  <label>Koordinat Verifikasi (lat, lng):</label>
-  <input id="latInput" type="text" placeholder="-2.10288">
-  <input id="lngInput" type="text" placeholder="115.15520">
-  <button id="btnCekTitik">🎯 Cek Titik Terdekat</button>
+<!-- TABEL DATA ESDM -->
+<div class="box">
+<b>Data Target ESDM (Read Only)</b>
+<table id="tabelEsdm">
+<thead>
+<tr>
+<th>ID</th>
+<th>Kecamatan</th>
+<th>Desa/Lokasi</th>
+<th>Lat</th>
+<th>Lng</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
 
-<div class="main-layout">
-  <div class="left-col">
-    <div id="map"></div>
+<!-- PETA -->
+<div id="map"></div>
 
-    <div class="panel">
-      <div class="panel-title">Form Input Verifikasi Lapangan</div>
+<button onclick="ambilLokasi()">📍 Ambil Posisi Saya</button>
 
-      <div id="nearestInfo" class="info-text">
-        Belum ada titik verifikasi. Ambil posisi GPS atau isi koordinat manual, lalu tekan <b>Cek Titik Terdekat</b>.
-      </div>
+<label>Atau Input Koordinat Manual</label>
+<input id="latManual" placeholder="Latitude">
+<input id="lngManual" placeholder="Longitude">
+<button onclick="prosesManual()">Proses Koordinat</button>
 
-      <div class="row" style="margin-top:8px;">
-        <div>
-          <div class="field-label">Target ESDM (ID Barang)</div>
-          <input id="idBarangField" type="text" readonly />
-        </div>
-        <div>
-          <div class="field-label">Jarak Selisih (meter)</div>
-          <input id="jarakField" type="text" readonly />
-        </div>
-        <div>
-          <div class="field-label">Status Validasi (hitungan)</div>
-          <input id="statusHitungField" type="text" readonly />
-        </div>
-      </div>
+<!-- FORM VERVAL -->
+<div class="box hidden" id="formVerval">
+<b>Form Verifikasi Lapangan</b>
 
-      <div class="row" style="margin-top:8px;">
-        <div>
-          <div class="field-label">Petugas Verifikasi</div>
-          <input id="petugasField" type="text" placeholder="Nama petugas" />
-        </div>
-        <div>
-          <div class="field-label">Akurasi GPS (meter)</div>
-          <input id="akurasiField" type="number" min="0" step="1" placeholder="mis. 5" />
-        </div>
-      </div>
+<input id="tahun" class="readonly" readonly>
+<input id="id_barang" class="readonly" readonly>
 
-      <div class="row" style="margin-top:8px;">
-        <div>
-          <div class="field-label">Status Fisik</div>
-          <select id="statusFisikField">
-            <option value="">Pilih...</option>
-            <option>Baik</option>
-            <option>Rusak Ringan</option>
-            <option>Rusak Berat</option>
-            <option>Hilang / Tidak Ada</option>
-          </select>
-        </div>
-        <div>
-          <div class="field-label">Metode Verifikasi</div>
-          <select id="metodeField">
-            <option value="">Pilih...</option>
-            <option>Visual</option>
-            <option>Wawancara</option>
-            <option>Visual + Wawancara</option>
-          </select>
-        </div>
-      </div>
+<input id="nama_kecamatan">
+<input id="nama_desa_lokasi">
 
-      <div class="row" style="margin-top:8px;">
-        <div>
-          <div class="field-label">Nama Narasumber</div>
-          <input id="narasumberField" type="text" placeholder="Nama warga / pihak terkait" />
-        </div>
-      </div>
+<input id="lat_awal" class="readonly" readonly>
+<input id="lng_awal" class="readonly" readonly>
 
-      <div style="margin-top:8px;">
-        <div class="field-label">Keterangan Wawancara</div>
-        <textarea id="wawancaraField" rows="2" style="width:100%;border-radius:8px;border:1px solid #1f2933;background:#020617;color:#e5e7eb;padding:6px;font-size:12px;"></textarea>
-      </div>
+<input id="lat_verval" class="readonly" readonly>
+<input id="lng_verval" class="readonly" readonly>
 
-      <div style="margin-top:8px;">
-        <div class="field-label">Catatan Fisik / Kondisi</div>
-        <textarea id="catatanField" rows="2" style="width:100%;border-radius:8px;border:1px solid #1f2933;background:#020617;color:#e5e7eb;padding:6px;font-size:12px;"></textarea>
-      </div>
+<input id="jarak" class="readonly" readonly>
+<input id="status_validasi" class="readonly" readonly>
 
-      <button id="btnSimpan" style="margin-top:10px;width:100%;">💾 Simpan Verifikasi</button>
+<input id="petugas" placeholder="Petugas Verifikasi">
 
-      <div id="saveMsg" class="info-text" style="margin-top:6px;"></div>
-    </div>
-  </div>
+<select id="status_fisik">
+<option value="">Status Fisik</option>
+<option>Baik</option>
+<option>Rusak</option>
+<option>Hilang</option>
+</select>
 
-  <div class="right-col">
-    <div class="panel">
-      <div class="panel-title">Data Aset ESDM (Readonly)</div>
-      <div class="info-text">
-        Data berikut adalah daftar titik PJU TS ESDM untuk tahun terpilih. Sistem akan otomatis mencari titik terdekat saat Anda mengisi/ambil koordinat.
-      </div>
-      <div class="table-wrap" style="margin-top:8px;">
-        <table>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>ID Barang</th>
-              <th>Lat Awal</th>
-              <th>Lng Awal</th>
-              <th>Sumber</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="esdmTableBody">
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<select id="metode">
+<option value="">Metode Verifikasi</option>
+<option>Visual</option>
+<option>Wawancara</option>
+</select>
+
+<input id="narasumber" placeholder="Nama Narasumber">
+<textarea id="ket_wawancara" placeholder="Keterangan Wawancara"></textarea>
+<textarea id="catatan" placeholder="Catatan Fisik"></textarea>
+
+<button onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
 </div>
 
-<footer>
-  © 2025 • Tim Verifikasi & Validasi PJU TS ESDM Kabupaten Barito Timur
-</footer>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
-/* ====== KONFIGURASI API ====== */
-const API_BASE = "https://script.google.com/macros/s/AKfycbxJ4ynM5FieQC8w5zVairtshkDoWOgyxnryEUSsx8cT3xH6rSGyKZsENeviu1a9E4JrZg/exec";
+const SCRIPT_URL = "SCRIPT_URL_ANDA";
 
-/* ====== MAP & ICON ====== */
-const map = L.map("map").setView([-2.08, 115.15], 12);
+let dataESDM = [];
+let map = L.map('map').setView([-2.13,115.10], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19
-}).addTo(map);
+let markerSaya, markerESDM;
 
-const layerEsdm = L.layerGroup().addTo(map);
-let markerSaya = null;
-let markerHighlight = null;
-
-const esdmIcon = L.icon({
-  iconUrl: "esdm.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -28]
+fetch(`${SCRIPT_URL}?action=listYears`).then(r=>r.json()).then(d=>{
+  tahunSelect.innerHTML = d.years.map(y=>`<option>${y}</option>`).join('');
+  loadTahun();
 });
 
-/* ====== STATE DATA ====== */
-let dataEsdm = [];    // array objek {rowIndex, id_barang, lat_awal, lng_awal, ...}
-let selectedIndex = null; // rowIndex yang terpilih lewat pencarian terdekat
-let modeMatch = null;     // "ESDM" atau "NON_ESDM"
-
-/* ====== UTIL JARAK ====== */
-function distanceMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const rad = Math.PI / 180;
-  const dLat = (lat2 - lat1) * rad;
-  const dLon = (lon2 - lon1) * rad;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1*rad)*Math.cos(lat2*rad)*
-            Math.sin(dLon/2)**2;
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
-function classifyStatus(jarak) {
-  if (jarak == null || isNaN(jarak)) return "";
-  if (jarak < 30) return "Valid";
-  if (jarak < 100) return "Suspect / Bergeser";
-  return "Non-ESDM";
-}
-
-/* ====== LOAD TAHUN ====== */
-async function loadYears() {
-  const res = await fetch(API_BASE + "?action=listYears");
-  const js = await res.json();
-  const select = document.getElementById("tahunSelect");
-  select.innerHTML = '<option value="">Pilih tahun...</option>';
-  if (js.status === "success" && Array.isArray(js.years)) {
-    js.years.forEach(y => {
-      const opt = document.createElement("option");
-      opt.value = y;
-      opt.textContent = y;
-      select.appendChild(opt);
-    });
-  }
-}
-
-/* ====== LOAD DATA PER TAHUN ====== */
-async function loadDataByYear() {
-  const tahun = document.getElementById("tahunSelect").value;
-  const tbody = document.getElementById("esdmTableBody");
-  tbody.innerHTML = "";
-  layerEsdm.clearLayers();
-  dataEsdm = [];
-  selectedIndex = null;
-  modeMatch = null;
-  document.getElementById("nearestInfo").innerHTML =
-    'Belum ada titik verifikasi. Ambil posisi GPS atau isi koordinat manual, lalu tekan <b>Cek Titik Terdekat</b>.';
-  document.getElementById("idBarangField").value = "";
-  document.getElementById("jarakField").value = "";
-  document.getElementById("statusHitungField").value = "";
-
-  if (!tahun) return;
-
-  const res = await fetch(API_BASE + "?action=listByYear&year=" + encodeURIComponent(tahun));
-  const js = await res.json();
-  if (js.status !== "success" || !Array.isArray(js.data)) return;
-
-  dataEsdm = js.data;
-
-  dataEsdm.forEach((row, idx) => {
-    const tr = document.createElement("tr");
-    tr.dataset.rowIndex = row.rowIndex;
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${row.id_barang || "-"}</td>
-      <td>${row.lat_awal || ""}</td>
-      <td>${row.lng_awal || ""}</td>
-      <td>${row.sumber_data || ""}</td>
-      <td>${row.status_validasi || ""}</td>
-    `;
-    tbody.appendChild(tr);
-
-    const lat = parseFloat(row.lat_awal);
-    const lng = parseFloat(row.lng_awal);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      const popup = `
-        <b>ID:</b> ${row.id_barang || "-"}<br>
-        <b>Status:</b> ${row.status_validasi || "-"}<br>
-        <b>Sumber:</b> ${row.sumber_data || "-"}
-      `;
-      const m = L.marker([lat, lng], { icon: esdmIcon }).bindPopup(popup);
-      m.addTo(layerEsdm);
-    }
+function loadTahun(){
+  fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
+  .then(r=>r.json()).then(d=>{
+    dataESDM = d.data;
+    renderTabel();
+    renderPeta();
   });
-
-  if (dataEsdm.length > 0) {
-    const group = L.featureGroup(
-      dataEsdm
-        .map(r => [parseFloat(r.lat_awal), parseFloat(r.lng_awal)])
-        .filter(p => !isNaN(p[0]) && !isNaN(p[1]))
-        .map(p => L.marker(p))
-    );
-    try {
-      map.fitBounds(group.getBounds().pad(0.2));
-    } catch(e) {}
-  }
 }
+tahunSelect.onchange = loadTahun;
 
-/* ====== CARI TITIK ESDM TERDEKAT ====== */
-function cariTerdekat(latV, lngV) {
-  if (!dataEsdm || dataEsdm.length === 0) return null;
-  let minDist = Infinity;
-  let best = null;
-  dataEsdm.forEach(r => {
-    const lat0 = parseFloat(r.lat_awal);
-    const lng0 = parseFloat(r.lng_awal);
-    if (isNaN(lat0) || isNaN(lng0)) return;
-    const d = distanceMeters(lat0, lng0, latV, lngV);
-    if (d < minDist) {
-      minDist = d;
-      best = { row: r, jarak: d };
-    }
+function renderTabel(){
+  let tb = "";
+  dataESDM.forEach(r=>{
+    tb += `<tr id="row${r.rowIndex}">
+      <td>${r.id_barang}</td>
+      <td>${r.nama_kecamatan||""}</td>
+      <td>${r.nama_desa_lokasi||""}</td>
+      <td>${r.lat_awal}</td>
+      <td>${r.lng_awal}</td>
+      <td>${r.status_validasi||""}</td>
+    </tr>`;
   });
-  return best;
+  tabelEsdm.querySelector("tbody").innerHTML = tb;
 }
 
-/* ====== HIGHLIGHT BARIS & MAP ====== */
-function highlightRow(rowIndex) {
-  const tbody = document.getElementById("esdmTableBody");
-  [...tbody.querySelectorAll("tr")].forEach(tr => {
-    tr.classList.toggle("selected-row", tr.dataset.rowIndex == rowIndex);
+function renderPeta(){
+  if(markerESDM) markerESDM.clearLayers();
+  markerESDM = L.layerGroup().addTo(map);
+  dataESDM.forEach(d=>{
+    L.marker([d.lat_awal,d.lng_awal]).addTo(markerESDM);
   });
 }
 
-/* ====== PROSES TITIK VERIFIKASI ====== */
-function prosesTitikVerifikasi() {
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-  const info = document.getElementById("nearestInfo");
-  const statusField = document.getElementById("statusHitungField");
-  const jarakField = document.getElementById("jarakField");
-  const idField = document.getElementById("idBarangField");
-  const saveMsg = document.getElementById("saveMsg");
+function ambilLokasi(){
+  navigator.geolocation.getCurrentPosition(pos=>{
+    prosesTitik(pos.coords.latitude, pos.coords.longitude);
+  });
+}
 
-  saveMsg.textContent = "";
+function prosesManual(){
+  prosesTitik(
+    parseFloat(latManual.value),
+    parseFloat(lngManual.value)
+  );
+}
 
-  if (isNaN(lat) || isNaN(lng)) {
-    info.textContent = "Koordinat tidak valid. Periksa lagi lat/lng.";
-    return;
-  }
+function prosesTitik(lat, lng){
+  if(markerSaya) map.removeLayer(markerSaya);
+  markerSaya = L.marker([lat,lng]).addTo(map);
+  map.setView([lat,lng],17);
 
-  // marker lokasi saya
-  if (markerSaya) map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat, lng]).addTo(map).bindPopup("📍 Lokasi Verifikasi").openPopup();
-  map.setView([lat, lng], 16);
+  let terdekat = null, jarakMin = 999999;
 
-  if (!dataEsdm || dataEsdm.length === 0) {
-    info.innerHTML = "Tidak ada data ESDM untuk tahun ini. Titik ini akan dianggap sebagai <b>Temuan Non-ESDM</b> bila disimpan.";
-    statusField.value = "Non-ESDM (Tanpa data acuan)";
-    jarakField.value = "";
-    idField.value = "";
-    selectedIndex = null;
-    modeMatch = "NON_ESDM";
-    highlightRow(null);
-    if (markerHighlight) { map.removeLayer(markerHighlight); markerHighlight = null; }
-    return;
-  }
+  dataESDM.forEach(d=>{
+    let j = hitungJarak(lat,lng,d.lat_awal,d.lng_awal);
+    if(j < jarakMin){
+      jarakMin = j;
+      terdekat = d;
+    }
+  });
 
-  const best = cariTerdekat(lat, lng);
-  if (!best) {
-    info.innerHTML = "Tidak dapat mencari titik terdekat. Periksa data ESDM.";
-    return;
-  }
+  document.getElementById("formVerval").classList.remove("hidden");
 
-  const jarak = best.jarak;
-  const status = classifyStatus(jarak);
-  const jarakRound = Math.round(jarak * 10) / 10;
-
-  jarakField.value = jarakRound;
-  statusField.value = status;
-  idField.value = best.row.id_barang || "(tanpa ID)";
-
-  let badgeClass = "badge-non";
-  if (status === "Valid") badgeClass = "badge-valid";
-  else if (status.indexOf("Suspect") === 0) badgeClass = "badge-suspect";
-
-  info.innerHTML = `
-    Titik verifikasi dipasangkan dengan aset ESDM terdekat:
-    <br><b>ID:</b> ${best.row.id_barang || "-"} |
-    <b>Jarak:</b> ${jarakRound} m
-    <br>Status hitungan: <span class="badge ${badgeClass}">${status || "-"}</span>
-    ${status === "Non-ESDM" ? "<br>Titik ini di luar radius aset ESDM. Jika disimpan, akan dibuat sebagai <b>Temuan Non-ESDM</b>." : ""}
-  `;
-
-  // highlight row tabel & titik map
-  selectedIndex = best.row.rowIndex;
-
-  highlightRow(selectedIndex);
-
-  if (markerHighlight) map.removeLayer(markerHighlight);
-  const lat0 = parseFloat(best.row.lat_awal);
-  const lng0 = parseFloat(best.row.lng_awal);
-  if (!isNaN(lat0) && !isNaN(lng0)) {
-    markerHighlight = L.circleMarker([lat0, lng0], {
-      radius: 10,
-      color: "#22c55e",
-      weight: 3,
-      fillColor: "#22c55e",
-      fillOpacity: 0.3
-    }).addTo(map);
-    const bounds = L.latLngBounds([[lat0,lng0],[lat,lng]]);
-    map.fitBounds(bounds.pad(0.3));
-  }
-
-  // tentukan mode match
-  if (status === "Non-ESDM") {
-    modeMatch = "NON_ESDM";
-  } else {
-    modeMatch = "ESDM";
+  if(jarakMin <= 100){
+    isiFormESDM(terdekat,lat,lng,jarakMin);
+  }else{
+    isiFormNonESDM(lat,lng);
   }
 }
 
-/* ====== SIMPAN VERIFIKASI ====== */
-async function simpanVerifikasi() {
-  const saveMsg = document.getElementById("saveMsg");
-  saveMsg.textContent = "";
+function isiFormESDM(d,lat,lng,jarak){
+  tahun.value = tahunSelect.value;
+  id_barang.value = d.id_barang;
+  nama_kecamatan.value = d.nama_kecamatan;
+  nama_desa_lokasi.value = d.nama_desa_lokasi;
+  nama_kecamatan.readOnly = true;
+  nama_desa_lokasi.readOnly = true;
 
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-  const petugas = document.getElementById("petugasField").value.trim();
-  const akurasi = document.getElementById("akurasiField").value;
-  const statusFisik = document.getElementById("statusFisikField").value;
-  const metode = document.getElementById("metodeField").value;
-  const narasumber = document.getElementById("narasumberField").value.trim();
-  const wawancara = document.getElementById("wawancaraField").value.trim();
-  const catatan = document.getElementById("catatanField").value.trim();
-
-  if (isNaN(lat) || isNaN(lng)) {
-    saveMsg.textContent = "Koordinat verifikasi belum diisi dengan benar.";
-    return;
-  }
-  if (!petugas) {
-    saveMsg.textContent = "Nama petugas wajib diisi.";
-    return;
-  }
-  if (!modeMatch) {
-    saveMsg.textContent = "Belum ada hasil pencarian titik terdekat. Tekan 'Cek Titik Terdekat' dulu.";
-    return;
-  }
-
-  saveMsg.textContent = "Mengirim data...";
-
-  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-
-  try {
-    let payload = null;
-
-    if (modeMatch === "ESDM" && selectedIndex) {
-      // update baris ESDM yang sudah ada
-      payload = {
-        action: "verval_esdm",
-        rowIndex: selectedIndex,
-        tanggal_verval: today,
-        petugas_verval: petugas,
-        koordinat_verval_lat: lat,
-        koordinat_verval_lng: lng,
-        akurasi_gps_meter: akurasi,
-        status_fisik: statusFisik,
-        metode_verifikasi: metode,
-        nama_narasumber: narasumber,
-        keterangan_wawancara: wawancara,
-        catatan_fisik: catatan
-      };
-    } else {
-      // temuan Non-ESDM → baris baru
-      const tahun = document.getElementById("tahunSelect").value || "";
-      payload = {
-        action: "temuan_lapangan",
-        tahun_perolehan_aset_esdm: "", // biarkan kosong → di backend jadi NON-ESDM
-        tanggal_verval: today,
-        petugas_verval: petugas,
-        koordinat_verval_lat: lat,
-        koordinat_verval_lng: lng,
-        akurasi_gps_meter: akurasi,
-        status_fisik: statusFisik,
-        metode_verifikasi: metode,
-        nama_narasumber: narasumber,
-        keterangan_wawancara: wawancara,
-        catatan_fisik: catatan,
-        keterangan_awal: "Temuan Lapangan " + (tahun ? ("Tahun " + tahun) : "")
-      };
-    }
-
-    const res = await fetch(API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const js = await res.json();
-    if (js.status === "success") {
-      saveMsg.textContent = "✅ Berhasil disimpan: " + (js.message || "");
-      // refresh data tabel untuk lihat status terbaru
-      loadDataByYear();
-    } else {
-      saveMsg.textContent = "⚠️ Gagal menyimpan: " + (js.message || "Unknown error");
-    }
-  } catch (err) {
-    console.error(err);
-    saveMsg.textContent = "⚠️ Error jaringan / server: " + err;
-  }
+  lat_awal.value = d.lat_awal;
+  lng_awal.value = d.lng_awal;
+  lat_verval.value = lat;
+  lng_verval.value = lng;
+  jarak.value = jarak.toFixed(1);
+  status_validasi.value = jarak < 30 ? "Valid" : "Suspect";
 }
 
-/* ====== EVENT HANDLER ====== */
-document.getElementById("tahunSelect").addEventListener("change", loadDataByYear);
-document.getElementById("btnReload").addEventListener("click", loadDataByYear);
+function isiFormNonESDM(lat,lng){
+  tahun.value = "NON-ESDM";
+  id_barang.value = "";
+  nama_kecamatan.readOnly = false;
+  nama_desa_lokasi.readOnly = false;
+  lat_awal.value = "";
+  lng_awal.value = "";
+  lat_verval.value = lat;
+  lng_verval.value = lng;
+  jarak.value = "";
+  status_validasi.value = "Non-ESDM";
+}
 
-document.getElementById("btnGps").addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    alert("Perangkat ini tidak mendukung GPS.");
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(pos => {
-    document.getElementById("latInput").value = pos.coords.latitude.toFixed(6);
-    document.getElementById("lngInput").value = pos.coords.longitude.toFixed(6);
-    prosesTitikVerifikasi();
-  }, () => alert("Gagal mengambil lokasi GPS."));
-});
+function hitungJarak(a,b,c,d){
+  const R=6371000,rad=Math.PI/180;
+  let dLat=(c-a)*rad,dLng=(d-b)*rad;
+  let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
+  return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+}
 
-document.getElementById("btnCekTitik").addEventListener("click", prosesTitikVerifikasi);
-document.getElementById("btnSimpan").addEventListener("click", simpanVerifikasi);
+function kirimVerval(){
+  let payload={
+    action: status_validasi.value==="Non-ESDM"?"temuan_lapangan":"verval_esdm",
+    tahun_perolehan_aset_esdm: tahun.value,
+    id_barang: id_barang.value,
+    petugas_verval: petugas.value,
+    koordinat_verval_lat: lat_verval.value,
+    koordinat_verval_lng: lng_verval.value,
+    status_fisik: status_fisik.value,
+    metode_verifikasi: metode.value,
+    nama_narasumber: narasumber.value,
+    keterangan_wawancara: ket_wawancara.value,
+    catatan_fisik: catatan.value
+  };
 
-/* ====== INIT ====== */
-loadYears();
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
+  .then(r=>r.json()).then(d=>{
+    alert(d.message);
+    location.reload();
+  });
+}
 </script>
 
 </body>
