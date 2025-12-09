@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Verval PJU TS ESDM – Barito Timur</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
@@ -16,66 +15,59 @@ button{background:#00c2ff;color:#000;font-weight:bold;cursor:pointer}
 button:hover{opacity:0.9}
 
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
-th,td{border:1px solid #444;padding:6px;text-align:left}
+th,td{border:1px solid #444;padding:6px}
 th{background:#12244b}
 tr.active{background:#2b7cff;color:#fff}
 #map{height:320px;margin-top:10px;border-radius:10px}
 
-.readonly{background:#222}
+.readonly{background:#222;color:#aaa}
 .hidden{display:none}
 .box{background:#141f3d;padding:10px;border-radius:10px;margin-top:12px}
 </style>
 </head>
 
 <body>
-
-<header>
-✅ SISTEM VERIFIKASI LAPANGAN PJU TS ESDM – BARITO TIMUR
-</header>
+<header>✅ SISTEM VERIFIKASI LAPANGAN PJU TS ESDM – BARITO TIMUR</header>
 
 <div class="container">
 
-<!-- PILIH TAHUN -->
 <label>Pilih Tahun Perolehan</label>
-<select id="tahunSelect"></select>
+<select id="tahunSelect">
+  <option value="2021">2021</option>
+  <option value="2022">2022</option>
+  <option value="2023">2023</option>
+</select>
 
-<!-- TABEL DATA ESDM -->
 <div class="box">
 <b>Data Target ESDM (Read Only)</b>
 <table id="tabelEsdm">
 <thead>
 <tr>
-<th>ID</th>
-<th>Kecamatan</th>
-<th>Desa/Lokasi</th>
-<th>Lat</th>
-<th>Lng</th>
-<th>Status</th>
+<th>ID</th><th>Kecamatan</th><th>Desa/Lokasi</th>
+<th>Lat</th><th>Lng</th><th>Status</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 </div>
 
-<!-- PETA -->
 <div id="map"></div>
 
 <button onclick="ambilLokasi()">📍 Ambil Posisi Saya</button>
 
-<label>Atau Input Koordinat Manual</label>
+<label>Atau Input Manual</label>
 <input id="latManual" placeholder="Latitude">
 <input id="lngManual" placeholder="Longitude">
 <button onclick="prosesManual()">Proses Koordinat</button>
 
-<!-- FORM VERVAL -->
 <div class="box hidden" id="formVerval">
 <b>Form Verifikasi Lapangan</b>
 
 <input id="tahun" class="readonly" readonly>
 <input id="id_barang" class="readonly" readonly>
 
-<input id="nama_kecamatan">
-<input id="nama_desa_lokasi">
+<input id="nama_kecamatan" placeholder="Nama Kecamatan">
+<input id="nama_desa_lokasi" placeholder="Nama Desa/Lokasi">
 
 <input id="lat_awal" class="readonly" readonly>
 <input id="lng_awal" class="readonly" readonly>
@@ -107,153 +99,118 @@ tr.active{background:#2b7cff;color:#fff}
 
 <button onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
 </div>
-
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJ4ynM5FieQC8w5zVairtshkDoWOgyxnryEUSsx8cT3xH6rSGyKZsENeviu1a9E4JrZg/exec";
 
-let dataESDM = [];
-let map = L.map('map').setView([-2.13,115.10], 9);
+let dataESDM=[];
+let map=L.map('map').setView([-2.13,115.10],10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-let markerSaya, markerESDM;
-
-fetch(`${SCRIPT_URL}?action=listYears`).then(r=>r.json()).then(d=>{
-  tahunSelect.innerHTML = d.years.map(y=>`<option>${y}</option>`).join('');
-  loadTahun();
-});
+let markerSaya,layerESDM=L.layerGroup().addTo(map);
 
 function loadTahun(){
-  fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
-  .then(r=>r.json()).then(d=>{
-    dataESDM = d.data;
-    renderTabel();
-    renderPeta();
-  });
+fetch(`${SCRIPT_URL}?action=listByYear&year=${tahunSelect.value}`)
+.then(r=>r.json()).then(d=>{
+dataESDM=d.data||[];
+renderTabel();renderPeta();
+});
 }
-tahunSelect.onchange = loadTahun;
+tahunSelect.onchange=loadTahun;loadTahun();
 
 function renderTabel(){
-  let tb = "";
-  dataESDM.forEach(r=>{
-    tb += `<tr id="row${r.rowIndex}">
-      <td>${r.id_barang}</td>
-      <td>${r.nama_kecamatan||""}</td>
-      <td>${r.nama_desa_lokasi||""}</td>
-      <td>${r.lat_awal}</td>
-      <td>${r.lng_awal}</td>
-      <td>${r.status_validasi||""}</td>
-    </tr>`;
-  });
-  tabelEsdm.querySelector("tbody").innerHTML = tb;
+let html="";dataESDM.forEach(r=>{
+html+=`<tr>
+<td>${r.id_barang||""}</td>
+<td>${r.nama_kecamatan||""}</td>
+<td>${r.nama_desa_lokasi||""}</td>
+<td>${r.lat_awal}</td>
+<td>${r.lng_awal}</td>
+<td>${r.status_validasi||""}</td>
+</tr>`;
+});
+tabelEsdm.querySelector("tbody").innerHTML=html;
 }
 
 function renderPeta(){
-  if(markerESDM) markerESDM.clearLayers();
-  markerESDM = L.layerGroup().addTo(map);
-  dataESDM.forEach(d=>{
-    L.marker([d.lat_awal,d.lng_awal]).addTo(markerESDM);
-  });
+layerESDM.clearLayers();
+dataESDM.forEach(d=>{
+if(d.lat_awal && d.lng_awal){
+L.marker([d.lat_awal,d.lng_awal]).addTo(layerESDM);
+}});
 }
 
 function ambilLokasi(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    prosesTitik(pos.coords.latitude, pos.coords.longitude);
-  });
+navigator.geolocation.getCurrentPosition(p=>prosesTitik(p.coords.latitude,p.coords.longitude));
 }
-
 function prosesManual(){
-  prosesTitik(
-    parseFloat(latManual.value),
-    parseFloat(lngManual.value)
-  );
+prosesTitik(parseFloat(latManual.value),parseFloat(lngManual.value));
 }
 
-function prosesTitik(lat, lng){
-  if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat,lng]).addTo(map);
-  map.setView([lat,lng],17);
+function prosesTitik(lat,lng){
+if(markerSaya)map.removeLayer(markerSaya);
+markerSaya=L.marker([lat,lng]).addTo(map);
+map.setView([lat,lng],17);
 
-  let terdekat = null, jarakMin = 999999;
+let terdekat=null,jarakMin=999999;
+dataESDM.forEach(d=>{
+let j=hitungJarak(lat,lng,d.lat_awal,d.lng_awal);
+if(j<jarakMin){jarakMin=j;terdekat=d;}
+});
 
-  dataESDM.forEach(d=>{
-    let j = hitungJarak(lat,lng,d.lat_awal,d.lng_awal);
-    if(j < jarakMin){
-      jarakMin = j;
-      terdekat = d;
-    }
-  });
+formVerval.classList.remove("hidden");
 
-  document.getElementById("formVerval").classList.remove("hidden");
-
-  if(jarakMin <= 100){
-    isiFormESDM(terdekat,lat,lng,jarakMin);
-  }else{
-    isiFormNonESDM(lat,lng);
-  }
+if(jarakMin<=100) isiFormESDM(terdekat,lat,lng,jarakMin);
+else isiFormNonESDM(lat,lng);
 }
 
 function isiFormESDM(d,lat,lng,jarak){
-  tahun.value = tahunSelect.value;
-  id_barang.value = d.id_barang;
-  nama_kecamatan.value = d.nama_kecamatan;
-  nama_desa_lokasi.value = d.nama_desa_lokasi;
-  nama_kecamatan.readOnly = true;
-  nama_desa_lokasi.readOnly = true;
+tahun.value=tahunSelect.value;
+id_barang.value=d.id_barang;
+nama_kecamatan.value=d.nama_kecamatan||"";nama_desa_lokasi.value=d.nama_desa_lokasi||"";
+nama_kecamatan.readOnly=true;nama_desa_lokasi.readOnly=true;
 
-  lat_awal.value = d.lat_awal;
-  lng_awal.value = d.lng_awal;
-  lat_verval.value = lat;
-  lng_verval.value = lng;
-  jarak.value = jarak.toFixed(1);
-  status_validasi.value = jarak < 30 ? "Valid" : "Suspect";
+lat_awal.value=d.lat_awal;lng_awal.value=d.lng_awal;
+lat_verval.value=lat;lng_verval.value=lng;
+jarak.value=jarak.toFixed(1);
+status_validasi.value=jarak<30?"Valid":"Suspect / Bergeser";
 }
 
 function isiFormNonESDM(lat,lng){
-  tahun.value = "NON-ESDM";
-  id_barang.value = "";
-  nama_kecamatan.readOnly = false;
-  nama_desa_lokasi.readOnly = false;
-  lat_awal.value = "";
-  lng_awal.value = "";
-  lat_verval.value = lat;
-  lng_verval.value = lng;
-  jarak.value = "";
-  status_validasi.value = "Non-ESDM";
+tahun.value="NON-ESDM";id_barang.value="";
+nama_kecamatan.readOnly=false;nama_desa_lokasi.readOnly=false;
+lat_awal.value="";lng_awal.value="";
+lat_verval.value=lat;lng_verval.value=lng;
+jarak.value="";status_validasi.value="Non-ESDM";
 }
 
 function hitungJarak(a,b,c,d){
-  const R=6371000,rad=Math.PI/180;
-  let dLat=(c-a)*rad,dLng=(d-b)*rad;
-  let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
-  return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+const R=6371000,rad=Math.PI/180;
+let dLat=(c-a)*rad,dLng=(d-b)*rad;
+let x=Math.sin(dLat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dLng/2)**2;
+return R*(2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
 }
 
 function kirimVerval(){
-  let payload={
-    action: status_validasi.value==="Non-ESDM"?"temuan_lapangan":"verval_esdm",
-    tahun_perolehan_aset_esdm: tahun.value,
-    id_barang: id_barang.value,
-    petugas_verval: petugas.value,
-    koordinat_verval_lat: lat_verval.value,
-    koordinat_verval_lng: lng_verval.value,
-    status_fisik: status_fisik.value,
-    metode_verifikasi: metode.value,
-    nama_narasumber: narasumber.value,
-    keterangan_wawancara: ket_wawancara.value,
-    catatan_fisik: catatan.value
-  };
+let payload={
+action:status_validasi.value==="Non-ESDM"?"temuan_lapangan":"verval_esdm",
+tahun_perolehan_aset_esdm:tahun.value,
+id_barang:id_barang.value,
+petugas_verval:petugas.value,
+koordinat_verval_lat:lat_verval.value,
+koordinat_verval_lng:lng_verval.value,
+status_fisik:status_fisik.value,
+metode_verifikasi:metode.value,
+nama_narasumber:narasumber.value,
+keterangan_wawancara:ket_wawancara.value,
+catatan_fisik:catatan.value
+};
 
-  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
-  .then(r=>r.json()).then(d=>{
-    alert(d.message);
-    location.reload();
-  });
+fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)})
+.then(r=>r.json()).then(d=>{alert(d.message);location.reload();});
 }
 </script>
-
 </body>
 </html>
