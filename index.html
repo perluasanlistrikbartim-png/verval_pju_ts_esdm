@@ -100,6 +100,10 @@ tr.active{background:#2b7cff;color:#fff}
 
   <!-- PILIH TAHUN -->
   <label>Pilih Tahun Perolehan</label>
+  <button onclick="reloadHalaman()" style="margin-top:8px;background:#21e6a7;">
+  🔄 Reload Halaman
+</button>
+
   <select id="tahunSelect">
     <option value="">-- Pilih Tahun --</option>
     <option>2021</option>
@@ -202,8 +206,13 @@ tr.active{background:#2b7cff;color:#fff}
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  
 // GANTI kalau Apps Script mas bro berubah URL-nya
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
+
+  function reloadHalaman(){
+  location.reload();
+}
 
 let map = L.map('map').setView([-2.13,115.10],10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -407,6 +416,11 @@ function kirimVerval(){
     return;
   }
 
+  if(!petugas.value){
+    alert("❌ Nama petugas belum diisi!");
+    return;
+  }
+
   const fileInput = document.getElementById("foto_verval");
   const file = fileInput.files[0];
 
@@ -441,7 +455,17 @@ function kirimVerval(){
     .then(r => r.json())
     .then(d => {
       alert(d.message || "✅ Data berhasil disimpan");
-      location.reload();
+
+      // ✅ reset form TANPA reload paksa
+      formVerval.classList.add("hidden");
+      fileInput.value = "";
+      petugas.value = "";
+      status_fisik.value = "";
+      catatan.value = "";
+
+      // ✅ refresh tabel bawah + titik peta
+      loadVerval();
+      loadTahun();
     })
     .catch(err => {
       console.error("FETCH ERROR:", err);
@@ -451,6 +475,7 @@ function kirimVerval(){
 
   reader.readAsDataURL(file);
 }
+
 
 
 /* ============== JARAK ============== */
