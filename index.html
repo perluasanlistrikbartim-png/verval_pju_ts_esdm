@@ -409,70 +409,35 @@ function isiFormNonESDM(lat,lng){
 /* ============== KIRIM VERVAL ============== */
 
 function kirimVerval(){
-  if(!rowIndex.value){
-    alert("❌ Pilih dulu titik ESDM di peta!");
-    return;
-  }
-
-  if(!petugas.value){
-    alert("❌ Nama petugas belum diisi!");
-    return;
-  }
-
-  const fileInput = document.getElementById("foto_verval");
-  const file = fileInput.files[0];
-
-  if (!file) {
-    alert("❌ Foto WAJIB diupload!");
+  const file = document.getElementById("foto_verval").files[0];
+  if(!file){
+    alert("Foto wajib diupload!");
     return;
   }
 
   const reader = new FileReader();
 
-  reader.onload = function () {
-    const base64Data = reader.result.split(",")[1];
+  reader.onload = function(){
+    const base64 = reader.result.split(",")[1];
 
-    const payload = {
-      action: "verval_esdm",
-      rowIndex: rowIndex.value,
-      petugas_verval: petugas.value,
-      status_fisik: status_fisik.value,
-      catatan_fisik: catatan.value,
-      foto_base64: base64Data,
-      foto_nama: file.name,
-      foto_tipe: file.type
-    };
+    // BUILD URL GET MODE
+    let url = SCRIPT_URL 
+      + "?action=saveVerval"
+      + "&rowIndex=" + encodeURIComponent(rowIndex.value)
+      + "&petugas_verval=" + encodeURIComponent(petugas.value)
+      + "&status_fisik=" + encodeURIComponent(status_fisik.value)
+      + "&catatan_fisik=" + encodeURIComponent(catatan.value)
+      + "&foto_base64=" + encodeURIComponent(base64)
+      + "&foto_nama=" + encodeURIComponent(file.name)
+      + "&foto_tipe=" + encodeURIComponent(file.type);
 
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(d => {
-      alert(d.message || "✅ Data berhasil disimpan");
-
-      // ✅ reset form TANPA reload paksa
-      formVerval.classList.add("hidden");
-      fileInput.value = "";
-      petugas.value = "";
-      status_fisik.value = "";
-      catatan.value = "";
-
-      // ✅ refresh tabel bawah + titik peta
-      loadVerval();
-      loadTahun();
-    })
-    .catch(err => {
-      console.error("FETCH ERROR:", err);
-      alert("❌ Gagal mengirim data ke server.");
-    });
+    // ANTI-CORS: langsung panggil URL
+    window.location.href = url;
   };
 
   reader.readAsDataURL(file);
 }
+
 
 
 
