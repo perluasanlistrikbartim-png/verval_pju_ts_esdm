@@ -408,35 +408,45 @@ function isiFormNonESDM(lat,lng){
 
 /* ============== KIRIM VERVAL ============== */
 
-function kirimVerval(){
-  const file = document.getElementById("foto_verval").files[0];
-  if(!file){
+function kirimVerval() {
+  const fileInput = document.getElementById("foto_verval");
+  if (!fileInput.files[0]) {
     alert("Foto wajib diupload!");
     return;
   }
 
-  const reader = new FileReader();
+  // Buat form POST dinamis (anti-CORS)
+  let form = document.createElement("form");
+  form.method = "POST";
+  form.enctype = "multipart/form-data";
+  form.action = SCRIPT_URL;
 
-  reader.onload = function(){
-    const base64 = reader.result.split(",")[1];
+  // Tambahkan input hidden untuk semua data
+  function add(name, value){
+    let i = document.createElement("input");
+    i.type = "hidden";
+    i.name = name;
+    i.value = value;
+    form.appendChild(i);
+  }
 
-    // BUILD URL GET MODE
-    let url = SCRIPT_URL 
-      + "?action=saveVerval"
-      + "&rowIndex=" + encodeURIComponent(rowIndex.value)
-      + "&petugas_verval=" + encodeURIComponent(petugas.value)
-      + "&status_fisik=" + encodeURIComponent(status_fisik.value)
-      + "&catatan_fisik=" + encodeURIComponent(catatan.value)
-      + "&foto_base64=" + encodeURIComponent(base64)
-      + "&foto_nama=" + encodeURIComponent(file.name)
-      + "&foto_tipe=" + encodeURIComponent(file.type);
+  add("action", "verval_esdm");
+  add("rowIndex", rowIndex.value);
+  add("petugas_verval", petugas.value);
+  add("status_fisik", status_fisik.value);
+  add("catatan_fisik", catatan.value);
 
-    // ANTI-CORS: langsung panggil URL
-    window.location.href = url;
-  };
+  // Tambahkan input file
+  let fileField = document.createElement("input");
+  fileField.type = "file";
+  fileField.name = "foto_file";
+  fileField.files = fileInput.files;
+  form.appendChild(fileField);
 
-  reader.readAsDataURL(file);
+  document.body.appendChild(form);
+  form.submit();
 }
+
 
 
 
