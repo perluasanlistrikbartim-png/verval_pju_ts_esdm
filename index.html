@@ -204,6 +204,22 @@ const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url
 function reloadHalaman(){ location.reload(); }
 
 let map = L.map('map').setView([-2.13,115.10],10);
+  /* ======================= ICON ESDM & BARTIM ======================= */
+
+const iconESDM = L.icon({
+  iconUrl: 'esdm.png',      // ikon untuk titik data ESDM
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
+});
+
+const iconBARTIM = L.icon({
+  iconUrl: 'bartim.png',    // ikon lokasi verval petugas
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36]
+});
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let dataESDM = [];
@@ -272,7 +288,7 @@ function renderPeta(){
     const lat = parseAngka(d.lat_awal);
     const lng = parseAngka(d.lng_awal);
     if(!isNaN(lat) && !isNaN(lng)){
-      const m = L.marker([lat,lng]).addTo(layerESDM);
+      const m = L.marker([lat,lng], { icon: iconESDM }).addTo(layerESDM);
       m.on("click",()=>{
         map.setView([lat,lng],15);
         tandaiBaris(d.rowIndex);
@@ -312,7 +328,7 @@ function prosesManual(){
 
 function prosesTitik(lat, lng){
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat,lng]).addTo(map);
+  markerSaya = L.marker([lat,lng], { icon: iconBARTIM }).addTo(map);
   map.setView([lat,lng],17);
 
   // Cari titik terdekat
