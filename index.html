@@ -480,27 +480,7 @@ async function kirimVerval(){
   }
 }
 
-
-  // WAJIB!! agar tidak CORS BLOCKED
-  const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
-
-  const res = await fetch(PROXY + SCRIPT_URL, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(data)
-  });
-
-  const json = await res.json();
-
-  if(json.status === "success"){
-    alert("VERVAL berhasil disimpan!");
-    loadVerval(); // reload tabel hasil
-  } else {
-    alert("Gagal: " + json.message);
-  }
-}
-
-
+ 
 /* ======================= HITUNG JARAK ======================= */
 
 function hitungJarak(a,b,c,d){
