@@ -408,37 +408,69 @@ function isiFormNonESDM(lat, lng){
 /* ======================= KIRIM VERVAL (BASE64 + JSON) ======================= */
 
 async function kirimVerval(){
-  const fileInput = document.getElementById("foto_verval");
-  const file = fileInput.files[0];
 
-  if (!file){
-    alert("Foto wajib diupload!");
-    return;
+  try {
+
+    const file = foto_verval.files[0];
+    if(!file){
+      alert("Foto wajib diupload!");
+      return;
+    }
+
+    // === Convert ke base64 ===
+    const base64 = await new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=> resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
+    // === Data yang dikirim ===
+    const data = {
+      action: "verval",
+      rowIndex: rowIndex.value,
+      id_barang: id_barang.value,
+      nama_kecamatan: nama_kecamatan.value,
+      nama_desa_lokasi: nama_desa_lokasi.value,
+      lat_awal: lat_awal.value,
+      lng_awal: lng_awal.value,
+      status_validasi: status_validasi.value,
+      petugas_verval: petugas.value,
+      ket_wawancara: ket_wawancara.value,
+      catatan_fisik: catatan.value,
+      fotoBase64: base64
+    };
+
+    console.log("Kirim JSON ke GAS:", data);
+
+    const res = await fetch(PROXY + SCRIPT_URL, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json().catch(()=>{
+      alert("Gagal membaca respon dari server!");
+      return null;
+    });
+
+    if(!json){
+      return;
+    }
+
+    if(json.status === "success"){
+      alert("✔ VERVAL berhasil disimpan!");
+      loadVerval();
+    } else {
+      alert("❌ Gagal simpan: " + json.message);
+    }
+
+  } catch(err){
+    alert("❌ ERROR JAVASCRIPT: " + err);
+    console.error(err);
   }
+}
 
-  // Convert ke base64
-  const base64 = await new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = ()=> resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-  // Data dikirim ke Apps Script JSON
-  const data = {
-    action: "verval",
-    rowIndex: rowIndex.value,
-    id_barang: id_barang.value,
-    nama_kecamatan: nama_kecamatan.value,
-    nama_desa_lokasi: nama_desa_lokasi.value,
-    lat_awal: lat_awal.value,
-    lng_awal: lng_awal.value,
-    status_validasi: status_validasi.value,
-    petugas_verval: petugas.value,
-    ket_wawancara: ket_wawancara.value,
-    catatan_fisik: catatan.value,
-    fotoBase64: base64
-  };
 
   // WAJIB!! agar tidak CORS BLOCKED
   const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
