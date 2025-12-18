@@ -432,6 +432,9 @@ async function kirimVerval(){
     fotoBase64: base64
   };
 
+  // WAJIB!! agar tidak CORS BLOCKED
+  const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
+
   const res = await fetch(PROXY + SCRIPT_URL, {
     method: "POST",
     headers: {"Content-Type":"application/json"},
@@ -447,6 +450,7 @@ async function kirimVerval(){
     alert("Gagal: " + json.message);
   }
 }
+
 
 /* ======================= HITUNG JARAK ======================= */
 
