@@ -140,7 +140,6 @@ tr.active{background:#2b7cff;color:#fff}
 <input id="latManual" placeholder="Latitude (desimal)">
 <input id="lngManual" placeholder="Longitude (desimal)">
 <button onclick="prosesManual()">Proses Manual</button>
-
 <!-- FORM VERVAL -->
 <div class="box hidden" id="formVerval">
   <b>Form Verifikasi Lapangan</b>
@@ -156,10 +155,12 @@ tr.active{background:#2b7cff;color:#fff}
   <input id="lat_awal" class="readonly" readonly placeholder="Lat Awal ESDM">
   <input id="lng_awal" class="readonly" readonly placeholder="Lng Awal ESDM">
 
-  <input id="lat_verval" class="readonly" readonly placeholder="Lat Verval">
-  <input id="lng_verval" class="readonly" readonly placeholder="Lng Verval">
+  <input id="lat_verval" class="readonly" readonly placeholder="Lat Verval (GPS)">
+  <input id="lng_verval" class="readonly" readonly placeholder="Lng Verval (GPS)">
 
-  <input id="petugas" placeholder="Petugas Verifikasi">
+  <input id="petugas" placeholder="Petugas Verifikasi Lapangan">
+
+  <input id="ket_wawancara" placeholder="Hasil Wawancara / Informasi Tambahan">
 
   <select id="status_fisik">
     <option value="">Status Fisik</option>
@@ -168,13 +169,14 @@ tr.active{background:#2b7cff;color:#fff}
     <option>Hilang</option>
   </select>
 
-  <textarea id="catatan" placeholder="Catatan Fisik"></textarea>
+  <textarea id="catatan" placeholder="Catatan Kondisi Fisik / Keterangan Tambahan"></textarea>
 
   <label>Upload Foto Verval (Wajib)</label>
   <input type="file" id="foto_verval" accept="image/*" capture="environment">
 
-  <button onclick="testButton()">💾 SIMPAN VERVAL</button>
+  <button onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
 </div>
+
 
 <!-- DATA HASIL VERIFIKASI -->
 <div class="box">
@@ -250,7 +252,10 @@ function loadTahun(){
     return;
   }
 
- PROXY + encodeURIComponent(SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`)
+fetch(PROXY + encodeURIComponent(
+      SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`
+))
+
     .then(r=>r.json())
     .then(d=>{
       if(!d || !d.data){
