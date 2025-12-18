@@ -241,15 +241,23 @@ function loadTahun(){
     return;
   }
 
-  fetch(SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`)
+  fetch(PROXY + SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`)
     .then(r=>r.json())
     .then(d=>{
-      dataESDM = d.data || [];
+      if(!d || !d.data){
+        alert("Data tidak ditemukan / error dari server");
+        return;
+      }
+      dataESDM = d.data;
       renderTabelESDM();
       renderPeta();
     })
-    .catch(()=>alert("Gagal load data ESDM"));
+    .catch(err=>{
+      alert("Gagal load data ESDM\n" + err);
+      console.error(err);
+    });
 }
+
 
 function renderTabelESDM(){
   let html = "";
@@ -466,13 +474,16 @@ function hitungJarak(a,b,c,d){
 /* ======================= LOAD DATA VERVAL ======================= */
 
 function loadVerval(){
-  fetch(SCRIPT_URL + `?action=listVerval`)
+  fetch(PROXY + SCRIPT_URL + `?action=listVerval`)
     .then(r=>r.json())
     .then(d=>{
-      const rows = d.data || [];
-      let html = "";
+      if(!d || !d.data){
+        console.warn("Tidak ada data verval / JSON gagal.");
+        return;
+      }
 
-      rows.forEach(r=>{
+      let html = "";
+      d.data.forEach(r=>{
         const foto = r.link_foto_verval
           ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>`
           : "-";
@@ -490,8 +501,11 @@ function loadVerval(){
 
       tabelVerval.querySelector("tbody").innerHTML = html;
     })
-    .catch(()=> console.log("Gagal load data verval"));
+    .catch(err=>{
+      console.error("Error load verval:", err);
+    });
 }
+
 
 // pertama kali load
 loadVerval();
