@@ -173,7 +173,7 @@ tr.active{background:#2b7cff;color:#fff}
   <label>Upload Foto Verval (Wajib)</label>
   <input type="file" id="foto_verval" accept="image/*" capture="environment">
 
-  <button onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
+  <button onclick="testButton()">💾 SIMPAN VERVAL</button>
 </div>
 
 <!-- DATA HASIL VERIFIKASI -->
@@ -197,6 +197,15 @@ tr.active{background:#2b7cff;color:#fff}
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+console.log("SCRIPT STARTED OK");
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  console.log("DOM READY");
+});
+
+function testButton(){
+  alert("BUTTON WORKS!");
+}
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
 const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
