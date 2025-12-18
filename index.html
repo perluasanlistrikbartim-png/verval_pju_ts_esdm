@@ -250,7 +250,7 @@ function loadTahun(){
     return;
   }
 
-  fetch(PROXY + SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`)
+ PROXY + encodeURIComponent(SCRIPT_URL + `?action=listByYear&year=${tahunSelect.value}`)
     .then(r=>r.json())
     .then(d=>{
       if(!d || !d.data){
@@ -452,7 +452,7 @@ async function kirimVerval(){
 
     console.log("Kirim JSON ke GAS:", data);
 
-    const res = await fetch(PROXY + SCRIPT_URL, {
+    const res = await fetch(PROXY + encodeURIComponent(SCRIPT_URL), {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(data)
@@ -495,7 +495,7 @@ function hitungJarak(a,b,c,d){
 /* ======================= LOAD DATA VERVAL ======================= */
 
 function loadVerval(){
-  fetch(PROXY + SCRIPT_URL + `?action=listVerval`)
+  fetch(PROXY + encodeURIComponent(SCRIPT_URL + `?action=listVerval`))
     .then(r=>r.json())
     .then(d=>{
       if(!d || !d.data){
