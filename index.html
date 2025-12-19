@@ -7,152 +7,86 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
-/* ============================================================
-   GLOBAL UI — Modern, Responsif, Stabil
-============================================================ */
 body{
   margin:0;
   background:#0a0f1c;
   color:#e8edff;
-  font-family: 'Segoe UI', sans-serif;
+  font-family:'Segoe UI',sans-serif;
 }
-
 header{
   padding:16px;
   text-align:center;
   background:#111a33;
   border-bottom:2px solid #1e2f55;
-  box-shadow:0 0 15px #0ff3 inset;
   color:#9fd5ff;
   font-weight:bold;
+  box-shadow:0 0 15px #0ff3 inset;
 }
-
 .container{
   padding:14px;
   max-width:900px;
   margin:auto;
 }
 
-/* FORM + INPUT */
 select,input,textarea,button{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  margin-top:8px;
-  border:none;
-  font-size:15px;
-  background:#162038;
-  color:#cfe7ff;
+  width:100%; padding:10px; border-radius:8px;
+  margin-top:8px; border:none; font-size:15px;
+  background:#162038; color:#cfe7ff;
 }
 button{
-  background:#1abfff;
-  color:#001;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.2s;
+  background:#1abfff; color:#001; font-weight:bold;
+  cursor:pointer; transition:0.2s;
 }
-button:disabled{
-  opacity:0.4;
-  cursor:not-allowed;
-}
-button:hover:not(:disabled){
-  box-shadow:0 0 10px #00e5ff;
-}
+button:hover{ box-shadow:0 0 8px #00eaff; }
 
-/* TABEL */
 table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:12px;
+  width:100%; border-collapse:collapse; margin-top:12px;
   font-size:13px;
 }
 th,td{
-  border:1px solid #234;
-  padding:6px;
+  border:1px solid #234; padding:6px;
 }
-th{
-  background:#162850;
-  color:#aee2ff;
-}
-tr.active{
-  background:#2b7cff !important;
-  color:white;
-}
-tr.updated{
-  animation: updatedBlink 1.5s ease-out;
-}
-@keyframes updatedBlink{
-  0%{background:#3aff85;}
-  100%{background:transparent;}
-}
+th{ background:#162850; color:#aee2ff; }
+tr.active{ background:#2b7cff !important; color:white; }
+tr.updated{ animation:flash 1.2s ease-out; }
+@keyframes flash { 0%{background:#33ff88;} 100%{background:transparent;} }
 
-/* BOX */
 .box{
-  background:#111c33;
-  padding:12px;
-  border-radius:12px;
-  margin-top:16px;
-  box-shadow:0 0 10px #0ff3 inset;
+  background:#111c33; padding:12px; border-radius:12px;
+  box-shadow:0 0 10px #0ff3 inset; margin-top:16px;
 }
 
 .hidden{display:none}
-.readonly{
-  background:#0e1629;
-  color:#8ca3c7;
-}
+.readonly{background:#0e1629;color:#8ca3c7;}
 
-/* MAP */
 #map{
-  height:350px;
-  margin-top:12px;
-  border-radius:12px;
-  box-shadow:0 0 12px #00eaff44;
+  height:350px; margin-top:10px;
+  border-radius:12px; box-shadow:0 0 12px #00eaff44;
 }
 
-/* LOADING SPINNER */
+/* SPINNER */
 #loading{
-  position:fixed;
-  top:0; left:0;
-  width:100vw; height:100vh;
-  background:#0008;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-  visibility:hidden;
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  background:#0008;display:flex;align-items:center;
+  justify-content:center;z-index:999;visibility:hidden;
 }
 .spinner{
-  width:60px; height:60px;
-  border:8px solid #49dfff44;
-  border-top-color:#00eaff;
-  border-radius:50%;
-  animation: spin 0.8s linear infinite;
+  width:60px;height:60px;border:8px solid #44eaff44;
+  border-top-color:#00eaff;border-radius:50%;
+  animation:spin .8s linear infinite;
 }
-@keyframes spin{
-  to{transform:rotate(360deg);}
-}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 .footer{
-  margin-top:20px;
-  padding:12px;
-  text-align:center;
-  font-size:12px;
-  background:#111a33;
+  margin-top:20px;padding:12px;text-align:center;
+  font-size:12px;background:#111a33;color:#9bb7e6;
   border-top:1px solid #1f2d55;
-  color:#9bb7e6;
-}
-
-/* Responsiveness */
-@media (max-width:600px){
-  table{font-size:11px}
-  th,td{padding:4px}
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOADING SPINNER -->
 <div id="loading"><div class="spinner"></div></div>
 
 <header>
@@ -164,7 +98,7 @@ tr.updated{
 
 <div class="container">
 
-<!-- ======================= PILIH TAHUN ======================= -->
+<!-- Pilih tahun -->
 <label>Pilih Tahun Perolehan</label>
 <select id="tahunSelect">
   <option value="">-- Pilih Tahun --</option>
@@ -173,32 +107,24 @@ tr.updated{
   <option>2023</option>
 </select>
 
-<button onclick="reloadHalaman()" style="background:#22e6a7;margin-top:8px">
-  🔄 Reload Halaman
-</button>
+<button onclick="location.reload()" style="background:#22e6a7">🔄 Reload Halaman</button>
 
-<!-- ======================= DATA ESDM ======================= -->
+<!-- DATA ESDM -->
 <div class="box">
   <b>DATA TARGET ESDM</b>
   <table id="tabelEsdm">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Kecamatan</th>
-        <th>Desa</th>
-        <th>Koordinat</th>
-        <th>Status</th>
-        <th>Wawancara</th>
-        <th>Catatan</th>
-        <th>Foto</th>
-        <th>Waktu</th>
+        <th>ID</th><th>Kecamatan</th><th>Desa</th><th>Koordinat</th>
+        <th>Status</th><th>Wawancara</th><th>Catatan</th>
+        <th>Foto</th><th>Waktu</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
-<!-- ======================= PETA ======================= -->
+<!-- MAP -->
 <div id="map"></div>
 
 <button onclick="ambilLokasi()">📍 Ambil Posisi GPS</button>
@@ -208,7 +134,7 @@ tr.updated{
 <input id="lngManual" placeholder="Longitude">
 <button onclick="prosesManual()">Proses Manual</button>
 
-<!-- ======================= FORM VERVAL ======================= -->
+<!-- FORM VERVAL -->
 <div class="box hidden" id="formVerval">
   <b>FORM VERVAL</b>
 
@@ -231,9 +157,7 @@ tr.updated{
 
   <select id="status_fisik">
     <option value="">Status Fisik</option>
-    <option>Baik</option>
-    <option>Rusak</option>
-    <option>Hilang</option>
+    <option>Baik</option><option>Rusak</option><option>Hilang</option>
   </select>
 
   <input id="nama_narasumber" placeholder="Nama Narasumber">
@@ -246,17 +170,14 @@ tr.updated{
   <button id="btnSimpan" onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
 </div>
 
-<!-- ======================= DATA VERVAL ======================= -->
+<!-- DATA VERVAL -->
 <div class="box">
   <b>DATA HASIL VERVAL</b>
   <table id="tabelVerval">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Lokasi</th>
-        <th>Status</th>
-        <th>Petugas</th>
-        <th>Foto</th>
+        <th>ID</th><th>Lokasi</th><th>Status</th>
+        <th>Petugas</th><th>Foto</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -265,35 +186,41 @@ tr.updated{
 
 </div>
 
-<!-- ======================= SCRIPT ======================= -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-/* CONFIG */
+/* ================= CONFIG ================= */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
 const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
-/* SPINNER */
+// Ikon custom dari GitHub RAW
+const iconESDM = L.icon({
+  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
+  iconSize:[32,32],iconAnchor:[16,32]
+});
+const iconBARTIM = L.icon({
+  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
+  iconSize:[36,36],iconAnchor:[18,36]
+});
+
 function showLoad(){ loading.style.visibility="visible"; }
 function hideLoad(){ loading.style.visibility="hidden"; }
 
-/* MAP */
-let map = L.map('map').setView([-2.13,115.10],10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-let markerSaya;
+/* ================= MAP ================= */
+let map = L.map('map').setView([-2.13,115.1],10);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 let layerESDM = L.layerGroup().addTo(map);
-let cacheTahun = {}; // CACHE DATA
+let markerSaya;
 
-/* DEBOUNCE LOADING */
-let tahunTimeout = null;
-tahunSelect.onchange = function(){
+/* ================= LOAD TAHUN + CACHE ================= */
+let cacheTahun = {};
+let tahunTimeout=null;
+tahunSelect.onchange = ()=> {
   clearTimeout(tahunTimeout);
-  tahunTimeout = setTimeout(loadTahun, 300);
+  tahunTimeout=setTimeout(loadTahun,250);
 };
 
-/* LOAD TAHUN — CEPAT (dengan cache) */
 function loadTahun(){
-  const tahun = tahunSelect.value;
+  const tahun=tahunSelect.value;
   if(!tahun){ tabelEsdm.querySelector("tbody").innerHTML=""; return; }
 
   if(cacheTahun[tahun]){
@@ -307,149 +234,160 @@ function loadTahun(){
     .then(r=>r.json())
     .then(j=>{
       hideLoad();
-      cacheTahun[tahun] = j.data;
+      cacheTahun[tahun]=j.data;
       renderTabel(j.data);
       renderPeta(j.data);
     })
-    .catch(err=>{
-      hideLoad();
-      alert("Gagal load data: " + err);
-    });
+    .catch(e=>{hideLoad();alert("Gagal load: "+e);});
 }
 
-/* TABEL */
+/* ================= TABEL ================= */
 function renderTabel(list){
-  let html="";
+  let rows="";
   list.forEach(r=>{
-    html+=`
-      <tr id="row${r.rowIndex}">
-        <td>${r.id_barang}</td>
-        <td>${r.nama_kecamatan}</td>
-        <td>${r.nama_desa_lokasi}</td>
-        <td>${r.lat_awal}, ${r.lng_awal}</td>
-        <td>${r.status_validasi||""}</td>
-        <td>${r.keterangan_wawancara||""}</td>
-        <td>${r.catatan_fisik||""}</td>
-        <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
-        <td>${r.waktu_simpan||""}</td>
-      </tr>`;
+    rows+=`
+    <tr id="row${r.rowIndex}">
+      <td>${r.id_barang}</td>
+      <td>${r.nama_kecamatan}</td>
+      <td>${r.nama_desa_lokasi}</td>
+      <td>${r.lat_awal},${r.lng_awal}</td>
+      <td>${r.status_validasi||""}</td>
+      <td>${r.keterangan_wawancara||""}</td>
+      <td>${r.catatan_fisik||""}</td>
+      <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+      <td>${r.waktu_simpan||""}</td>
+    </tr>`;
   });
-  tabelEsdm.querySelector("tbody").innerHTML=html;
+  tabelEsdm.querySelector("tbody").innerHTML=rows;
 }
 
-/* MAP */
+/* ================= MAP RENDER ================= */
 function renderPeta(list){
   layerESDM.clearLayers();
-  list.forEach(r=>{
-    if(!r.lat_awal || !r.lng_awal) return;
-    const m = L.marker([r.lat_awal, r.lng_awal]).addTo(layerESDM);
-    m.on("click",()=> pilihTitik(r));
+  list.forEach(d=>{
+    if(!d.lat_awal||!d.lng_awal) return;
+    const m=L.marker([d.lat_awal,d.lng_awal],{icon:iconESDM}).addTo(layerESDM);
+    m.on("click",()=> pilihTitik(d));
   });
 }
 
-/* PILIH TITIK */
+/* ================= PILIH TITIK ================= */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
-  id_barang.value = d.id_barang;
-  nama_kecamatan.value = d.nama_kecamatan;
-  nama_desa_lokasi.value = d.nama_desa_lokasi;
-  rowIndex.value = d.rowIndex;
-  lat_awal.value = d.lat_awal;
-  lng_awal.value = d.lng_awal;
+  rowIndex.value=d.rowIndex;
+  id_barang.value=d.id_barang;
+  nama_kecamatan.value=d.nama_kecamatan;
+  nama_desa_lokasi.value=d.nama_desa_lokasi;
+  lat_awal.value=d.lat_awal;
+  lng_awal.value=d.lng_awal;
 
   highlightRow(d.rowIndex);
 }
 
 function highlightRow(i){
-  const tr = document.getElementById("row"+i);
-  if(!tr) return;
+  let tr=document.getElementById("row"+i);
   tr.classList.add("updated");
-  setTimeout(()=> tr.classList.remove("updated"),1500);
+  setTimeout(()=>tr.classList.remove("updated"),1200);
 }
 
-/* GPS */
+/* ================= GPS ================= */
 function ambilLokasi(){
-  if(!navigator.geolocation) return alert("GPS tidak mendukung");
+  if(!navigator.geolocation) return alert("GPS tidak tersedia");
   navigator.geolocation.getCurrentPosition(pos=>{
-    prosesTitik(pos.coords.latitude, pos.coords.longitude);
+    prosesTitik(pos.coords.latitude,pos.coords.longitude);
   });
 }
-
 function prosesManual(){
-  const a = parseFloat(latManual.value);
-  const b = parseFloat(lngManual.value);
-  if(isNaN(a)||isNaN(b)) return alert("Koordinat tidak valid");
-  prosesTitik(a,b);
+  const lat=parseFloat(latManual.value), lng=parseFloat(lngManual.value);
+  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
+  prosesTitik(lat,lng);
 }
-
 function prosesTitik(lat,lng){
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat,lng]).addTo(map);
+  markerSaya=L.marker([lat,lng],{icon:iconBARTIM}).addTo(map);
   map.setView([lat,lng],17);
-  lat_verval.value = lat;
-  lng_verval.value = lng;
+  lat_verval.value=lat;
+  lng_verval.value=lng;
+
+  hitungStatusValidasi(lat,lng);
 }
 
-/* ================== KIRIM VERVAL ================== */
+/* ================= HITUNG JARAK & VALIDASI ================= */
+function hitungJarak(lat1,lng1,lat2,lng2){
+  const R=6371000, rad=Math.PI/180;
+  const dLat=(lat2-lat1)*rad, dLng=(lng2-lng1)*rad;
+  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)**2;
+  return R*(2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
+function hitungStatusValidasi(lat,lng){
+  const la=parseFloat(lat_awal.value);
+  const lo=parseFloat(lng_awal.value);
+  if(isNaN(la)||isNaN(lo)) return;
+
+  const jar=hitungJarak(lat,lng,la,lo);
+  jarak.value = jar.toFixed(1);
+
+  if(jar<30) status_validasi.value="Valid";
+  else if(jar<100) status_validasi.value="Bergeser (Suspect)";
+  else status_validasi.value="Lokasi Tidak Cocok";
+}
+
+/* ================= KIRIM VERVAL ================= */
 async function kirimVerval(){
+  btnSimpan.disabled=true;
+  btnSimpan.innerHTML="⏳ Menyimpan...";
 
-  btnSimpan.disabled = true;
-  btnSimpan.innerText = "⏳ Menyimpan...";
-
-  const file = foto_verval.files[0];
+  const file=foto_verval.files[0];
   if(!file){ alert("Foto wajib!"); resetBtn(); return; }
 
-  const base64 = await new Promise(res=>{
-    const r = new FileReader();
-    r.onload=()=>res(r.result);
-    r.readAsDataURL(file);
+  const base64=await new Promise(res=>{
+    const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(file);
   });
 
-  const data = {
+  const data={
     action:"verval",
-    rowIndex: rowIndex.value,
-    id_barang: id_barang.value,
-    nama_kecamatan: nama_kecamatan.value,
-    nama_desa_lokasi: nama_desa_lokasi.value,
-    lat_awal: lat_awal.value,
-    lng_awal: lng_awal.value,
-    lat_verval: lat_verval.value,
-    lng_verval: lng_verval.value,
-    petugas_verval: petugas.value,
-    status_validasi: status_validasi.value,
-    status_fisik: status_fisik.value,
-    nama_narasumber: nama_narasumber.value,
-    ket_wawancara: ket_wawancara.value,
-    catatan_fisik: catatan.value,
-    fotoBase64: base64,
-    jarak: jarak.value
+    rowIndex:rowIndex.value,
+    id_barang:id_barang.value,
+    nama_kecamatan:nama_kecamatan.value,
+    nama_desa_lokasi:nama_desa_lokasi.value,
+    lat_awal:lat_awal.value,
+    lng_awal:lng_awal.value,
+    lat_verval:lat_verval.value,
+    lng_verval:lng_verval.value,
+    petugas_verval:petugas.value,
+    status_validasi:status_validasi.value,
+    status_fisik:status_fisik.value,
+    nama_narasumber:nama_narasumber.value,
+    ket_wawancara:ket_wawancara.value,
+    catatan_fisik:catatan.value,
+    fotoBase64:base64,
+    jarak:jarak.value
   };
 
   showLoad();
-
-  const res = await fetch(PROXY + SCRIPT_URL,{
+  const res=await fetch(PROXY+SCRIPT_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify(data)
+    body:JSON.stringify(data)
   });
-
   hideLoad();
 
-  const j = await res.json();
-  alert(j.message || "Selesai");
+  const j=await res.json();
+  alert(j.message||"Selesai");
 
   resetBtn();
   loadVerval();
 }
 
 function resetBtn(){
-  btnSimpan.disabled = false;
-  btnSimpan.innerText = "💾 SIMPAN VERVAL";
+  btnSimpan.disabled=false;
+  btnSimpan.innerHTML="💾 SIMPAN VERVAL";
 }
 
-/* LOAD DATA VERVAL */
+/* ================= LOAD VERVAL ================= */
 function loadVerval(){
-  fetch(PROXY + SCRIPT_URL + "?action=listVerval")
+  fetch(PROXY+SCRIPT_URL+"?action=listVerval")
     .then(r=>r.json())
     .then(j=>{
       let html="";
