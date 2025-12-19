@@ -482,7 +482,19 @@ function prosesTitik(lat, lng){
   lng_verval.value = lng;
 
   hitungJarak();
+
+  /* === FIX SUPER PENTING ===
+     Jika user belum pilih titik ESDM → tidak ada data
+  */
+  if(!rowIndex.value){
+    alert("⚠ Pilih dulu titik ESDM sebelum memasukkan lokasi verval.");
+    return;
+  }
+
+  /* === AUTO TAMPILKAN FORM VERVAL === */
+  formVerval.classList.remove("hidden");
 }
+
 
 /* ============================================================
    ⚡ HITUNG JARAK
