@@ -313,6 +313,38 @@ let cacheTahun = {};
 let markerSaya;
 let layerESDM = L.layerGroup().addTo(map);
 
+/* ============================================================
+   ⚡ CUSTOM ICONS (ESDM + BARTIM)
+============================================================ */
+const iconEsdm = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 42],
+  popupAnchor: [0, -42],
+});
+
+const iconBartim = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 42],
+  popupAnchor: [0, -42],
+});
+
+/* Tambahkan glow */
+const iconGlowCSS = document.createElement("style");
+iconGlowCSS.innerHTML = `
+  .leaflet-marker-icon[src*="esdm"] {
+    filter: drop-shadow(0 0 8px #00eaff) drop-shadow(0 0 16px #0088ff);
+  }
+  .leaflet-marker-icon[src*="bartim"] {
+    filter: drop-shadow(0 0 8px #00ff88) drop-shadow(0 0 16px #00dd66);
+  }
+`;
+document.head.appendChild(iconGlowCSS);
+
+/* ============================================================
+   ⚡ DEBOUNCE PILIH TAHUN
+============================================================ */
 let tahunTimeout = null;
 
 tahunSelect.onchange = function(){
@@ -325,6 +357,7 @@ tahunSelect.onchange = function(){
 ============================================================ */
 function loadTahun(){
   const tahun = tahunSelect.value;
+
   if(!tahun){
     tabelEsdm.querySelector("tbody").innerHTML = "";
     return;
@@ -355,14 +388,15 @@ function loadTahun(){
 }
 
 /* ============================================================
-   ⚡ RENDER TABEL
+   ⚡ RENDER TABEL LIST DATA
 ============================================================ */
 function renderTabel(list){
   let html = "";
 
   list.forEach(r => {
+
     const mapsLink = r.lat_awal && r.lng_awal
-      ? `<a href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
+      ? `<a style="color:#4ae2ff" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
       : "-";
 
     html += `
@@ -391,14 +425,16 @@ function renderPeta(list){
   list.forEach(r => {
     if(!r.lat_awal || !r.lng_awal) return;
 
-    L.marker([r.lat_awal, r.lng_awal])
-      .addTo(layerESDM)
-      .on("click", () => pilihTitik(r));
+    L.marker([r.lat_awal, r.lng_awal], {
+      icon: iconEsdm
+    })
+    .addTo(layerESDM)
+    .on("click", () => pilihTitik(r));
   });
 }
 
 /* ============================================================
-   ⚡ PILIH TITIK → BUKA FORM VERVAL
+   ⚡ PILIH TITIK: BUKA FORM VERVAL
 ============================================================ */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
@@ -407,12 +443,14 @@ function pilihTitik(d){
   nama_kecamatan.value   = d.nama_kecamatan;
   nama_desa_lokasi.value = d.nama_desa_lokasi;
   rowIndex.value         = d.rowIndex;
-  lat_awal.value         = d.lat_awal;
-  lng_awal.value         = d.lng_awal;
+
+  lat_awal.value = d.lat_awal;
+  lng_awal.value = d.lng_awal;
 
   highlightRow(d.rowIndex);
 }
 
+/* highlight saat pilih baris */
 function highlightRow(i){
   const tr = document.getElementById("row" + i);
   if(!tr) return;
@@ -424,8 +462,7 @@ function highlightRow(i){
    ⚡ AMBIL LOKASI GPS
 ============================================================ */
 function ambilLokasi(){
-  if(!navigator.geolocation)
-    return alert("GPS tidak tersedia di perangkat.");
+  if(!navigator.geolocation) return alert("GPS tidak tersedia di perangkat ini.");
 
   navigator.geolocation.getCurrentPosition(pos => {
     prosesTitik(pos.coords.latitude, pos.coords.longitude);
@@ -433,25 +470,25 @@ function ambilLokasi(){
 }
 
 /* ============================================================
-   ⚡ INPUT KOORDINAT MANUAL
+   ⚡ PROSES MANUAL KOORDINAT
 ============================================================ */
 function prosesManual(){
   const lat = parseFloat(latManual.value);
   const lng = parseFloat(lngManual.value);
 
   if(isNaN(lat) || isNaN(lng))
-    return alert("Koordinat tidak valid");
+    return alert("Koordinat tidak valid.");
 
   prosesTitik(lat, lng);
 }
 
 /* ============================================================
-   ⚡ PROSES TITIK → SET MARKER USER
+   ⚡ SET TITIK VERVAL
 ============================================================ */
 function prosesTitik(lat, lng){
   if(markerSaya) map.removeLayer(markerSaya);
 
-  markerSaya = L.marker([lat, lng]).addTo(map);
+  markerSaya = L.marker([lat, lng], { icon: iconBartim }).addTo(map);
 
   map.setView([lat, lng], 17);
 
@@ -462,7 +499,7 @@ function prosesTitik(lat, lng){
 }
 
 /* ============================================================
-   ⚡ HITUNG JARAK AKURAT (Haversine)
+   ⚡ HITUNG JARAK
 ============================================================ */
 function hitungJarak(){
   if(!lat_verval.value || !lng_verval.value) return;
@@ -473,8 +510,8 @@ function hitungJarak(){
   let lon2 = parseFloat(lng_verval.value);
 
   const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
 
   const a =
     Math.sin(dLat/2)**2 +
@@ -489,7 +526,7 @@ function hitungJarak(){
 }
 
 /* ============================================================
-   ⚡ KIRIM VERVAL KE GOOGLE SHEET
+   ⚡ KIRIM VERVAL
 ============================================================ */
 async function kirimVerval(){
 
@@ -534,8 +571,8 @@ async function kirimVerval(){
   const url = encodeURIComponent(SCRIPT_URL);
 
   const res = await fetch(PROXY + url, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
     body: JSON.stringify(payload)
   });
 
@@ -554,7 +591,7 @@ function resetBtn(){
 }
 
 /* ============================================================
-   ⚡ LOAD DATA HASIL VERVAL
+   ⚡ LOAD HASIL VERVAL
 ============================================================ */
 function loadVerval(){
   const url = encodeURIComponent(SCRIPT_URL + "?action=listVerval");
@@ -584,58 +621,7 @@ loadVerval();
 ============================================================ */
 function reloadHalaman(){ location.reload(); }
 </script>
-<!-- ============================================================
-     ⚡ EFEK KILAT ELEKTRIK – CANVAS ANIMASI PREMIUM
-============================================================ -->
-<canvas id="electricFX"></canvas>
 
-<script>
-/* ===== Canvas Setup ===== */
-const canvas = document.getElementById("electricFX");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
-
-/* ===== Utility Random ===== */
-function rand(min, max){
-  return Math.random() * (max - min) + min;
-}
-
-/* ============================================================
-   ⚡ FUNGSI UTAMA ANIMASI KILAT
-============================================================ */
-function drawLightning(){
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for(let i=0; i<4; i++){
-    let x = rand(0, canvas.width);
-    let y = 0;
-    let segments = 12;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-
-    for(let j=0; j<=segments; j++){
-      x += rand(-40, 40);
-      y += canvas.height / segments;
-      ctx.lineTo(x, y);
-    }
-
-    ctx.strokeStyle = `rgba(0,255,255,${rand(0.05, 0.28)})`;
-    ctx.lineWidth = rand(1, 2);
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = "#0ff";
-    ctx.stroke();
-  }
-}
-
-setInterval(drawLightning, 230);  // efek kilat frekuensi tinggi
-</script>
 
 
 <!-- ============================================================
