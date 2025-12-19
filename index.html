@@ -321,25 +321,23 @@ const iconEsdm = L.icon({
   iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
   iconSize: [42, 42],
   iconAnchor: [21, 42],
+  className: "icon-esdm"
 });
 
 const iconBartim = L.icon({
   iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
   iconSize: [42, 42],
   iconAnchor: [21, 42],
+  className: "icon-bartim"
 });
 
 /* glow */
-const iconGlowCSS = document.createElement("style");
-iconGlowCSS.innerHTML = `
-  .leaflet-marker-icon[src*="esdm"] {
-    filter: drop-shadow(0 0 8px #00eaff) drop-shadow(0 0 16px #0088ff);
-  }
-  .leaflet-marker-icon[src*="bartim"] {
-    filter: drop-shadow(0 0 8px #00ff88) drop-shadow(0 0 16px #00dd66);
-  }
+const glowCSS = document.createElement("style");
+glowCSS.innerHTML = `
+  .icon-esdm { filter: drop-shadow(0 0 8px #00eaff) drop-shadow(0 0 16px #0088ff); }
+  .icon-bartim { filter: drop-shadow(0 0 8px #00ff88) drop-shadow(0 0 16px #00dd66); }
 `;
-document.head.appendChild(iconGlowCSS);
+document.head.appendChild(glowCSS);
 
 /* ============================================================
    ⚡ DEBOUNCE PILIH TAHUN
@@ -352,7 +350,7 @@ tahunSelect.onchange = function(){
 };
 
 /* ============================================================
-   ⚡ LOAD DATA PER TAHUN — FIX TANPA encodeURIComponent()
+   ⚡ LOAD DATA PER TAHUN — FIX
 ============================================================ */
 function loadTahun(){
   const tahun = tahunSelect.value;
@@ -370,10 +368,10 @@ function loadTahun(){
 
   showLoad();
 
-  const url = SCRIPT_URL + "?action=listByYear&year=" + tahun;
+  const url = `${SCRIPT_URL}?action=listByYear&year=${tahun}`;
 
-  fetch(PROXY + url)
-    .then(r => r.json())
+  fetch(PROXY + encodeURIComponent(url))
+    .then(res => res.json())
     .then(j => {
       hideLoad();
       cacheTahun[tahun] = j.data;
@@ -394,9 +392,10 @@ function renderTabel(list){
 
   list.forEach(r => {
 
-    const mapsLink = r.lat_awal && r.lng_awal
-      ? `<a style="color:#4ae2ff" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
-      : "-";
+    const mapsLink =
+      r.lat_awal && r.lng_awal
+        ? `<a style="color:#4ae2ff" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
+        : "-";
 
     html += `
       <tr id="row${r.rowIndex}">
@@ -424,11 +423,9 @@ function renderPeta(list){
   list.forEach(r => {
     if(!r.lat_awal || !r.lng_awal) return;
 
-    L.marker([r.lat_awal, r.lng_awal], {
-      icon: iconEsdm
-    })
-    .addTo(layerESDM)
-    .on("click", () => pilihTitik(r));
+    L.marker([r.lat_awal, r.lng_awal], { icon: iconEsdm })
+      .addTo(layerESDM)
+      .on("click", () => pilihTitik(r));
   });
 }
 
@@ -515,7 +512,7 @@ function hitungJarak(){
 }
 
 /* ============================================================
-   ⚡ KIRIM VERVAL — FIX TANPA encodeURIComponent()
+   ⚡ KIRIM VERVAL — FIX
 ============================================================ */
 async function kirimVerval(){
 
@@ -552,14 +549,18 @@ async function kirimVerval(){
     ket_wawancara: ket_wawancara.value,
     catatan_fisik: catatan.value,
     fotoBase64: base64,
-    jarak: jarak.value
+
+    /* wajib sesuai script apps script */
+    jarak_selisih_meter: jarak.value.replace(" m",""),
+    akurasi_gps_meter: 5,
+    metode_verifikasi: "Visual GPS"
   };
 
   showLoad();
 
   const url = SCRIPT_URL;
 
-  const res = await fetch(PROXY + url, {
+  const res = await fetch(PROXY + encodeURIComponent(url), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload)
@@ -583,10 +584,11 @@ function resetBtn(){
    ⚡ LOAD DATA VERVAL — FIX
 ============================================================ */
 function loadVerval(){
-  const url = SCRIPT_URL + "?action=listVerval";
+  const url =
+    `${SCRIPT_URL}?action=listVerval`;
 
-  fetch(PROXY + url)
-    .then(r => r.json())
+  fetch(PROXY + encodeURIComponent(url))
+    .then(res => res.json())
     .then(j => {
       let html = "";
       j.data.forEach(r => {
@@ -611,6 +613,7 @@ loadVerval();
 function reloadHalaman(){ location.reload(); }
 
 </script>
+
 
 
 
