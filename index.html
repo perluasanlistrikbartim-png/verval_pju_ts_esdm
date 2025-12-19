@@ -3,42 +3,198 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VERVAL PJU TS ESDM • Barito Timur</title>
+<title>⚡ VERVAL PJU TS — Kabupaten Barito Timur</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
-body{margin:0;background:#0a0f1c;color:#e8edff;font-family:'Segoe UI',sans-serif;}
-header{padding:16px;text-align:center;background:#111a33;border-bottom:2px solid #1e2f55;
-  box-shadow:0 0 15px #0ff3 inset;color:#9fd5ff;font-weight:bold;}
-.container{padding:14px;max-width:900px;margin:auto;}
-select,input,textarea,button{
-  width:100%;padding:10px;border-radius:8px;margin-top:8px;border:none;
-  font-size:15px;background:#162038;color:#cfe7ff;}
-button{background:#1abfff;color:#001;font-weight:bold;cursor:pointer;transition:.2s;}
-button:hover{box-shadow:0 0 10px #00e5ff;}
-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
-th,td{border:1px solid #234;padding:6px;}
-th{background:#162850;color:#aee2ff;}
-tr.updated{animation:updatedBlink 1.2s ease-out;}
-@keyframes updatedBlink{0%{background:#3aff85;}100%{background:transparent;}}
-.box{background:#111c33;padding:12px;border-radius:12px;margin-top:16px;
-  box-shadow:0 0 10px #0ff3 inset;}
-.hidden{display:none}
-.readonly{background:#0e1629;color:#8ca3c7;}
-#map{height:350px;margin-top:12px;border-radius:12px;
-  box-shadow:0 0 12px #00eaff44;}
-#loading{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0008;
-  display:flex;align-items:center;justify-content:center;z-index:9999;visibility:hidden;}
-.spinner{width:60px;height:60px;border:8px solid #49dfff44;border-top-color:#00eaff;
-  border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
+/* ============================================================
+   === PREMIUM MAX LIGHTNING UI — DARK NEON INTERFACE ===
+============================================================ */
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at center, #020216, #000010 70%, #000000);
+  color: #e0f7ff;
+  font-family: 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ELECTRIC BACKGROUND */
+#electricFX {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  opacity: .55;
+  z-index: 0;
+}
+
+/* HEADER */
+header {
+  padding: 22px;
+  text-align: center;
+  background: linear-gradient(180deg, #021428, #000814 70%, #000);
+  border-bottom: 2px solid #00eaff55;
+  box-shadow: 0 0 25px #00eaff33 inset, 0 0 40px #0088ff22;
+  position: relative;
+  z-index: 5;
+}
+
+.header-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 35px;
+}
+
+.logo-esdm, .logo-bartim {
+  width: 85px;
+  height: 85px;
+  border-radius: 6px;
+  background: #002233;
+  padding: 6px;
+  box-shadow: 0 0 20px #00eaff66;
+  animation: glowLogo 6s ease-in-out infinite;
+}
+@keyframes glowLogo {
+  0%,100% { filter: drop-shadow(0 0 10px #00eaff); }
+  50% { filter: drop-shadow(0 0 25px #00eaffaa); }
+}
+
+.header-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  text-shadow: 0 0 12px #00eaff, 0 0 25px #00aaff;
+  margin-top: 10px;
+}
+
+.header-sub {
+  font-size: 0.95rem;
+  color: #a8deff;
+  margin-top: 6px;
+  text-shadow: 0 0 8px #0099ff88;
+}
+
+/* CONTAINER */
+.container {
+  padding: 15px;
+  max-width: 960px;
+  margin: auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* INPUTS */
+select, input, textarea, button {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  margin-top: 8px;
+  border: none;
+  font-size: 15px;
+  background: #071a33;
+  color: #cfefff;
+  box-shadow: 0 0 12px #00eaff22 inset;
+}
+button {
+  background: linear-gradient(90deg, #00eaff, #0088ff);
+  color: #001;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.18s;
+}
+button:hover {
+  box-shadow: 0 0 15px #00eaffcc;
+  transform: translateY(-2px);
+}
+
+/* BOX */
+.box {
+  background: #071427cc;
+  padding: 15px;
+  border-radius: 14px;
+  box-shadow: 0 0 20px #00eaff33 inset, 0 0 30px #0088ff22;
+  margin-top: 18px;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid #0c2b44;
+  padding: 7px;
+}
+th {
+  background: #0b2442;
+  color: #aee7ff;
+}
+tr.updated {
+  animation: blinkUpdate 1.2s ease-out;
+}
+@keyframes blinkUpdate {
+  0% { background: #18ff9c; }
+  100% { background: transparent; }
+}
+
+/* MAP */
+#map {
+  height: 360px;
+  margin-top: 15px;
+  border-radius: 14px;
+  box-shadow: 0 0 20px #00eaff44;
+}
+
+/* LOADING SPINNER */
+#loading {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #001018dd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  visibility: hidden;
+}
+.spinner {
+  width: 70px;
+  height: 70px;
+  border: 8px solid #00eaff44;
+  border-top-color: #00eaff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.readonly { background:#061325;color:#89a8c7; }
+.hidden { display:none; }
+
 </style>
 </head>
 
 <body>
+
+<canvas id="electricFX"></canvas>
+
 <div id="loading"><div class="spinner"></div></div>
 
-<header>VERIFIKASI & VALIDASI PJU TS – BARITO TIMUR</header>
+<header>
+  <div class="header-flex">
+    <img src="esdm.png" class="logo-esdm">
+    <div>
+      <div class="header-title">⚡ VERVAL PJU TS – BARITO TIMUR ⚡</div>
+      <div class="header-sub">Dinas PUPRPERKIM • ESDM • Dishub</div>
+    </div>
+    <img src="bartim.png" class="logo-bartim">
+  </div>
+</header>
 
 <div class="container">
 
@@ -50,17 +206,22 @@ tr.updated{animation:updatedBlink 1.2s ease-out;}
   <option>2023</option>
 </select>
 
-<button onclick="reloadHalaman()" style="background:#22e6a7;margin-top:8px">
-  🔄 Reload Halaman
-</button>
+<button onclick="reloadHalaman()" style="background:#22e6a7;margin-top:10px">🔄 Reload Halaman</button>
 
 <div class="box">
   <b>DATA TARGET ESDM</b>
   <table id="tabelEsdm">
     <thead>
       <tr>
-        <th>ID</th><th>Kecamatan</th><th>Desa</th><th>Koordinat</th>
-        <th>Status</th><th>Wawancara</th><th>Catatan</th><th>Foto</th><th>Waktu</th>
+        <th>ID</th>
+        <th>Kecamatan</th>
+        <th>Desa</th>
+        <th>Koordinat</th>
+        <th>Status</th>
+        <th>Wawancara</th>
+        <th>Catatan</th>
+        <th>Foto</th>
+        <th>Waktu</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -96,7 +257,9 @@ tr.updated{animation:updatedBlink 1.2s ease-out;}
 
   <select id="status_fisik">
     <option value="">Status Fisik</option>
-    <option>Baik</option><option>Rusak</option><option>Hilang</option>
+    <option>Baik</option>
+    <option>Rusak</option>
+    <option>Hilang</option>
   </select>
 
   <input id="nama_narasumber" placeholder="Nama Narasumber">
@@ -113,45 +276,59 @@ tr.updated{animation:updatedBlink 1.2s ease-out;}
   <b>DATA HASIL VERVAL</b>
   <table id="tabelVerval">
     <thead>
-      <tr><th>ID</th><th>Lokasi</th><th>Status</th><th>Petugas</th><th>Foto</th></tr>
+      <tr>
+        <th>ID</th>
+        <th>Lokasi</th>
+        <th>Status</th>
+        <th>Petugas</th>
+        <th>Foto</th>
+      </tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
-</div>
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
-/* ====================== CONFIG ====================== */
+/* ============================================================
+   ⚡ KONFIGURASI
+============================================================ */
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
 
 const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
-/* ====================== SPINNER ====================== */
 function showLoad(){ loading.style.visibility="visible"; }
 function hideLoad(){ loading.style.visibility="hidden"; }
 
-/* ====================== MAP ====================== */
-let map = L.map('map').setView([-2.13,115.10],10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+/* ============================================================
+   ⚡ MAP LEAFLET
+============================================================ */
+let map = L.map('map').setView([-2.13,115.10], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(map);
 
 let cacheTahun = {};
 let markerSaya;
 let layerESDM = L.layerGroup().addTo(map);
 
-/* ====================== DEBOUNCE ====================== */
 let tahunTimeout = null;
+
 tahunSelect.onchange = function(){
   clearTimeout(tahunTimeout);
   tahunTimeout = setTimeout(loadTahun, 250);
 };
 
-/* ====================== LOAD TAHUN ====================== */
+/* ============================================================
+   ⚡ LOAD DATA PER TAHUN
+============================================================ */
 function loadTahun(){
   const tahun = tahunSelect.value;
-  if(!tahun){ tabelEsdm.querySelector("tbody").innerHTML=""; return; }
+  if(!tahun){
+    tabelEsdm.querySelector("tbody").innerHTML = "";
+    return;
+  }
 
   if(cacheTahun[tahun]){
     renderTabel(cacheTahun[tahun]);
@@ -164,110 +341,176 @@ function loadTahun(){
   const url = encodeURIComponent(SCRIPT_URL + "?action=listByYear&year=" + tahun);
 
   fetch(PROXY + url)
-    .then(r=>r.json())
-    .then(j=>{
+    .then(r => r.json())
+    .then(j => {
       hideLoad();
       cacheTahun[tahun] = j.data;
       renderTabel(j.data);
       renderPeta(j.data);
     })
-    .catch(err=>{
+    .catch(err => {
       hideLoad();
       alert("❌ Gagal load data: " + err);
     });
 }
 
-/* ====================== RENDER TABEL ====================== */
+/* ============================================================
+   ⚡ RENDER TABEL
+============================================================ */
 function renderTabel(list){
-  let html="";
-  list.forEach(r=>{
-    html+=`
+  let html = "";
+
+  list.forEach(r => {
+    const mapsLink = r.lat_awal && r.lng_awal
+      ? `<a href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
+      : "-";
+
+    html += `
       <tr id="row${r.rowIndex}">
         <td>${r.id_barang}</td>
         <td>${r.nama_kecamatan}</td>
         <td>${r.nama_desa_lokasi}</td>
-        <td>${r.lat_awal}, ${r.lng_awal}</td>
-        <td>${r.status_validasi||""}</td>
-        <td>${r.keterangan_wawancara||""}</td>
-        <td>${r.catatan_fisik||""}</td>
-        <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
-        <td>${r.waktu_simpan||""}</td>
+        <td>${mapsLink}</td>
+        <td>${r.status_validasi || ""}</td>
+        <td>${r.keterangan_wawancara || ""}</td>
+        <td>${r.catatan_fisik || ""}</td>
+        <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>` : "-"}</td>
+        <td>${r.waktu_simpan || ""}</td>
       </tr>`;
   });
+
   tabelEsdm.querySelector("tbody").innerHTML = html;
 }
 
-/* ====================== RENDER MAP ====================== */
+/* ============================================================
+   ⚡ RENDER PETA
+============================================================ */
 function renderPeta(list){
   layerESDM.clearLayers();
-  list.forEach(r=>{
+
+  list.forEach(r => {
     if(!r.lat_awal || !r.lng_awal) return;
+
     L.marker([r.lat_awal, r.lng_awal])
       .addTo(layerESDM)
-      .on("click",()=> pilihTitik(r));
+      .on("click", () => pilihTitik(r));
   });
 }
 
-/* ====================== PILIH TITIK ====================== */
+/* ============================================================
+   ⚡ PILIH TITIK → BUKA FORM VERVAL
+============================================================ */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
 
-  id_barang.value = d.id_barang;
-  nama_kecamatan.value = d.nama_kecamatan;
+  id_barang.value        = d.id_barang;
+  nama_kecamatan.value   = d.nama_kecamatan;
   nama_desa_lokasi.value = d.nama_desa_lokasi;
-  rowIndex.value = d.rowIndex;
-  lat_awal.value = d.lat_awal;
-  lng_awal.value = d.lng_awal;
+  rowIndex.value         = d.rowIndex;
+  lat_awal.value         = d.lat_awal;
+  lng_awal.value         = d.lng_awal;
 
-  highlight(d.rowIndex);
+  highlightRow(d.rowIndex);
 }
 
-function highlight(i){
-  const tr = document.getElementById("row"+i);
+function highlightRow(i){
+  const tr = document.getElementById("row" + i);
   if(!tr) return;
   tr.classList.add("updated");
-  setTimeout(()=> tr.classList.remove("updated"), 1200);
+  setTimeout(() => tr.classList.remove("updated"), 1200);
 }
 
-/* ====================== MANUAL / GPS ====================== */
+/* ============================================================
+   ⚡ AMBIL LOKASI GPS
+============================================================ */
 function ambilLokasi(){
-  if(!navigator.geolocation) return alert("GPS tidak tersedia.");
-  navigator.geolocation.getCurrentPosition(pos=>{
+  if(!navigator.geolocation)
+    return alert("GPS tidak tersedia di perangkat.");
+
+  navigator.geolocation.getCurrentPosition(pos => {
     prosesTitik(pos.coords.latitude, pos.coords.longitude);
   });
 }
 
+/* ============================================================
+   ⚡ INPUT KOORDINAT MANUAL
+============================================================ */
 function prosesManual(){
-  const a=parseFloat(latManual.value), b=parseFloat(lngManual.value);
-  if(isNaN(a)||isNaN(b)) return alert("Koordinat tidak valid.");
-  prosesTitik(a,b);
+  const lat = parseFloat(latManual.value);
+  const lng = parseFloat(lngManual.value);
+
+  if(isNaN(lat) || isNaN(lng))
+    return alert("Koordinat tidak valid");
+
+  prosesTitik(lat, lng);
 }
 
-function prosesTitik(lat,lng){
+/* ============================================================
+   ⚡ PROSES TITIK → SET MARKER USER
+============================================================ */
+function prosesTitik(lat, lng){
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya = L.marker([lat,lng]).addTo(map);
-  map.setView([lat,lng],17);
+
+  markerSaya = L.marker([lat, lng]).addTo(map);
+
+  map.setView([lat, lng], 17);
+
   lat_verval.value = lat;
   lng_verval.value = lng;
+
+  hitungJarak();
 }
 
-/* ====================== KIRIM VERVAL ====================== */
+/* ============================================================
+   ⚡ HITUNG JARAK AKURAT (Haversine)
+============================================================ */
+function hitungJarak(){
+  if(!lat_verval.value || !lng_verval.value) return;
+
+  let lat1 = parseFloat(lat_awal.value);
+  let lon1 = parseFloat(lng_awal.value);
+  let lat2 = parseFloat(lat_verval.value);
+  let lon2 = parseFloat(lng_verval.value);
+
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const d = R * c;
+
+  jarak.value = Math.round(d) + " m";
+}
+
+/* ============================================================
+   ⚡ KIRIM VERVAL KE GOOGLE SHEET
+============================================================ */
 async function kirimVerval(){
 
   btnSimpan.disabled = true;
   btnSimpan.innerText = "⏳ Menyimpan...";
 
   const file = foto_verval.files[0];
-  if(!file){ alert("Foto wajib!"); resetBtn(); return; }
+  if(!file){
+    alert("Foto verval wajib diupload!");
+    resetBtn();
+    return;
+  }
 
-  const base64 = await new Promise(res=>{
+  const base64 = await new Promise(resolve => {
     const r = new FileReader();
-    r.onload = ()=> res(r.result);
+    r.onload = () => resolve(r.result);
     r.readAsDataURL(file);
   });
 
-  const data = {
-    action:"verval",
+  const payload = {
+    action: "verval",
     rowIndex: rowIndex.value,
     id_barang: id_barang.value,
     nama_kecamatan: nama_kecamatan.value,
@@ -291,41 +534,43 @@ async function kirimVerval(){
   const url = encodeURIComponent(SCRIPT_URL);
 
   const res = await fetch(PROXY + url, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify(data)
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
   });
 
   hideLoad();
 
   const j = await res.json();
-  alert(j.message || "Selesai");
+  alert(j.message || "Berhasil disimpan");
 
   resetBtn();
   loadVerval();
 }
 
 function resetBtn(){
-  btnSimpan.disabled=false;
-  btnSimpan.innerText="💾 SIMPAN VERVAL";
+  btnSimpan.disabled = false;
+  btnSimpan.innerText = "💾 SIMPAN VERVAL";
 }
 
-/* ====================== LOAD DATA VERVAL ====================== */
+/* ============================================================
+   ⚡ LOAD DATA HASIL VERVAL
+============================================================ */
 function loadVerval(){
   const url = encodeURIComponent(SCRIPT_URL + "?action=listVerval");
 
   fetch(PROXY + url)
-    .then(r=>r.json())
-    .then(j=>{
-      let html="";
-      j.data.forEach(r=>{
-        html+=`
+    .then(r => r.json())
+    .then(j => {
+      let html = "";
+      j.data.forEach(r => {
+        html += `
           <tr>
             <td>${r.id_barang}</td>
             <td>${r.nama_desa_lokasi}</td>
             <td>${r.status_validasi}</td>
             <td>${r.petugas_verval}</td>
-            <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+            <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>` : "-"}</td>
           </tr>`;
       });
       tabelVerval.querySelector("tbody").innerHTML = html;
@@ -334,10 +579,82 @@ function loadVerval(){
 
 loadVerval();
 
-/* ====================== RELOAD ====================== */
+/* ============================================================
+   ⚡ RELOAD
+============================================================ */
 function reloadHalaman(){ location.reload(); }
-
 </script>
+<!-- ============================================================
+     ⚡ EFEK KILAT ELEKTRIK – CANVAS ANIMASI PREMIUM
+============================================================ -->
+<canvas id="electricFX"></canvas>
+
+<script>
+/* ===== Canvas Setup ===== */
+const canvas = document.getElementById("electricFX");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+/* ===== Utility Random ===== */
+function rand(min, max){
+  return Math.random() * (max - min) + min;
+}
+
+/* ============================================================
+   ⚡ FUNGSI UTAMA ANIMASI KILAT
+============================================================ */
+function drawLightning(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for(let i=0; i<4; i++){
+    let x = rand(0, canvas.width);
+    let y = 0;
+    let segments = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+
+    for(let j=0; j<=segments; j++){
+      x += rand(-40, 40);
+      y += canvas.height / segments;
+      ctx.lineTo(x, y);
+    }
+
+    ctx.strokeStyle = `rgba(0,255,255,${rand(0.05, 0.28)})`;
+    ctx.lineWidth = rand(1, 2);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#0ff";
+    ctx.stroke();
+  }
+}
+
+setInterval(drawLightning, 230);  // efek kilat frekuensi tinggi
+</script>
+
+
+<!-- ============================================================
+     ⚡ FOOTER PREMIUM
+============================================================ -->
+<footer style="
+  margin-top:40px;
+  padding:15px;
+  text-align:center;
+  background:#0b1222;
+  border-top:2px solid #113366;
+  color:#7fc7ff;
+  font-weight:bold;
+  text-shadow:0 0 10px #0088ff;
+  box-shadow:0 0 18px #00d9ff55 inset;
+">
+  © 2025 — VERVAL PJU TS • Dinas Pertambangan & Energi ESDM Barito Timur
+</footer>
+
 
 </body>
 </html>
