@@ -456,21 +456,56 @@ function highlightRow(i){
 /* ============================================================
    ⚡ GPS & MANUAL INPUT
 ============================================================ */
-function ambilLokasi(){
+ffunction ambilLokasi(){
   if(!navigator.geolocation) return alert("GPS tidak tersedia.");
 
   navigator.geolocation.getCurrentPosition(pos => {
-    prosesTitik(pos.coords.latitude, pos.coords.longitude);
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    const tahun = tahunSelect.value;
+    const list = cacheTahun[tahun];
+
+    if(!list){
+      return alert("Data ESDM belum dimuat.");
+    }
+
+    const nearest = cariTerdekat(lat, lng, list);
+    if(nearest) pilihTitik(nearest);
+
+    prosesTitik(lat, lng);
   });
 }
+
 
 function prosesManual(){
   const lat = parseFloat(latManual.value);
   const lng = parseFloat(lngManual.value);
 
-  if(isNaN(lat) || isNaN(lng)) return alert("Koordinat tidak valid.");
+  if(isNaN(lat) || isNaN(lng))
+    return alert("Koordinat tidak valid.");
+
+  // cari titik terdekat dari data tahun yang dipilih
+  const tahun = tahunSelect.value;
+  const list = cacheTahun[tahun];
+
+  if(!list){
+    return alert("Data ESDM belum dimuat.");
+  }
+
+  const nearest = cariTerdekat(lat, lng, list);
+
+  if(!nearest){
+    return alert("Tidak ditemukan titik ESDM terdekat.");
+  }
+
+  // auto pilih titik itu
+  pilihTitik(nearest);
+
+  // set marker & koordinat verval
   prosesTitik(lat, lng);
 }
+
 
 function prosesTitik(lat, lng){
   if(markerSaya) map.removeLayer(markerSaya);
@@ -522,6 +557,34 @@ function hitungJarak(){
 
   jarak.value = Math.round(d) + " m";
 }
+function cariTerdekat(lat, lng, list){
+  let minDist = Infinity;
+  let nearest = null;
+
+  list.forEach(r => {
+    if(!r.lat_awal || !r.lng_awal) return;
+
+    const R = 6371000;
+    const dLat = (lat - r.lat_awal) * Math.PI/180;
+    const dLng = (lng - r.lng_awal) * Math.PI/180;
+
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(r.lat_awal*Math.PI/180) *
+      Math.cos(lat*Math.PI/180) *
+      Math.sin(dLng/2)**2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c;
+
+    if(d < minDist){
+      minDist = d;
+      nearest = r;
+    }
+  });
+
+  return nearest;
+}
 
 /* ============================================================
    ⚡ KIRIM VERVAL — FIX
@@ -561,18 +624,12 @@ async function kirimVerval(){
     ket_wawancara: ket_wawancara.value,
     catatan_fisik: catatan.value,
     fotoBase64: base64,
-
-    /* wajib sesuai script apps script */
-    jarak_selisih_meter: jarak.value.replace(" m",""),
-    akurasi_gps_meter: 5,
-    metode_verifikasi: "Visual GPS"
+    jarak: jarak.value
   };
 
   showLoad();
 
-  const url = SCRIPT_URL;
-
-  const res = await fetch(PROXY + encodeURIComponent(url), {
+  const res = await fetch(SCRIPT_URL, {   // ← langsung Apps Script
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload)
@@ -586,6 +643,7 @@ async function kirimVerval(){
   resetBtn();
   loadVerval();
 }
+
 
 function resetBtn(){
   btnSimpan.disabled = false;
