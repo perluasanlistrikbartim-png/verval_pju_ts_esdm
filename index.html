@@ -297,7 +297,8 @@ tr.updated {
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
 
-const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
+const PROXY =
+  "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
 function showLoad(){ loading.style.visibility="visible"; }
 function hideLoad(){ loading.style.visibility="hidden"; }
@@ -314,23 +315,21 @@ let markerSaya;
 let layerESDM = L.layerGroup().addTo(map);
 
 /* ============================================================
-   ⚡ CUSTOM ICONS (ESDM + BARTIM)
+   ⚡ CUSTOM ICON ESDM & BARTIM
 ============================================================ */
 const iconEsdm = L.icon({
   iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
   iconSize: [42, 42],
   iconAnchor: [21, 42],
-  popupAnchor: [0, -42],
 });
 
 const iconBartim = L.icon({
   iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
   iconSize: [42, 42],
   iconAnchor: [21, 42],
-  popupAnchor: [0, -42],
 });
 
-/* Tambahkan glow */
+/* glow */
 const iconGlowCSS = document.createElement("style");
 iconGlowCSS.innerHTML = `
   .leaflet-marker-icon[src*="esdm"] {
@@ -353,7 +352,7 @@ tahunSelect.onchange = function(){
 };
 
 /* ============================================================
-   ⚡ LOAD DATA PER TAHUN
+   ⚡ LOAD DATA PER TAHUN — FIX TANPA encodeURIComponent()
 ============================================================ */
 function loadTahun(){
   const tahun = tahunSelect.value;
@@ -371,7 +370,7 @@ function loadTahun(){
 
   showLoad();
 
-  const url = encodeURIComponent(SCRIPT_URL + "?action=listByYear&year=" + tahun);
+  const url = SCRIPT_URL + "?action=listByYear&year=" + tahun;
 
   fetch(PROXY + url)
     .then(r => r.json())
@@ -388,7 +387,7 @@ function loadTahun(){
 }
 
 /* ============================================================
-   ⚡ RENDER TABEL LIST DATA
+   ⚡ RENDER TABEL
 ============================================================ */
 function renderTabel(list){
   let html = "";
@@ -434,7 +433,7 @@ function renderPeta(list){
 }
 
 /* ============================================================
-   ⚡ PILIH TITIK: BUKA FORM VERVAL
+   ⚡ PILIH TITIK → TAMPILKAN FORM
 ============================================================ */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
@@ -450,7 +449,6 @@ function pilihTitik(d){
   highlightRow(d.rowIndex);
 }
 
-/* highlight saat pilih baris */
 function highlightRow(i){
   const tr = document.getElementById("row" + i);
   if(!tr) return;
@@ -459,37 +457,28 @@ function highlightRow(i){
 }
 
 /* ============================================================
-   ⚡ AMBIL LOKASI GPS
+   ⚡ GPS & MANUAL INPUT
 ============================================================ */
 function ambilLokasi(){
-  if(!navigator.geolocation) return alert("GPS tidak tersedia di perangkat ini.");
+  if(!navigator.geolocation) return alert("GPS tidak tersedia.");
 
   navigator.geolocation.getCurrentPosition(pos => {
     prosesTitik(pos.coords.latitude, pos.coords.longitude);
   });
 }
 
-/* ============================================================
-   ⚡ PROSES MANUAL KOORDINAT
-============================================================ */
 function prosesManual(){
   const lat = parseFloat(latManual.value);
   const lng = parseFloat(lngManual.value);
 
-  if(isNaN(lat) || isNaN(lng))
-    return alert("Koordinat tidak valid.");
-
+  if(isNaN(lat) || isNaN(lng)) return alert("Koordinat tidak valid.");
   prosesTitik(lat, lng);
 }
 
-/* ============================================================
-   ⚡ SET TITIK VERVAL
-============================================================ */
 function prosesTitik(lat, lng){
   if(markerSaya) map.removeLayer(markerSaya);
 
   markerSaya = L.marker([lat, lng], { icon: iconBartim }).addTo(map);
-
   map.setView([lat, lng], 17);
 
   lat_verval.value = lat;
@@ -526,7 +515,7 @@ function hitungJarak(){
 }
 
 /* ============================================================
-   ⚡ KIRIM VERVAL
+   ⚡ KIRIM VERVAL — FIX TANPA encodeURIComponent()
 ============================================================ */
 async function kirimVerval(){
 
@@ -568,11 +557,11 @@ async function kirimVerval(){
 
   showLoad();
 
-  const url = encodeURIComponent(SCRIPT_URL);
+  const url = SCRIPT_URL;
 
   const res = await fetch(PROXY + url, {
     method:"POST",
-    headers:{"Content-Type":"application/json"},
+    headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload)
   });
 
@@ -591,10 +580,10 @@ function resetBtn(){
 }
 
 /* ============================================================
-   ⚡ LOAD HASIL VERVAL
+   ⚡ LOAD DATA VERVAL — FIX
 ============================================================ */
 function loadVerval(){
-  const url = encodeURIComponent(SCRIPT_URL + "?action=listVerval");
+  const url = SCRIPT_URL + "?action=listVerval";
 
   fetch(PROXY + url)
     .then(r => r.json())
@@ -620,7 +609,9 @@ loadVerval();
    ⚡ RELOAD
 ============================================================ */
 function reloadHalaman(){ location.reload(); }
+
 </script>
+
 
 
 
