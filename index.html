@@ -2,103 +2,46 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Verval PJU TS ESDM – Barito Timur</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERVAL PJU TS ESDM • Barito Timur</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
-body{
-  margin:0;
-  background:#0a0f1c;
-  color:#e8edff;
-  font-family:'Segoe UI',sans-serif;
-}
-header{
-  padding:16px;
-  text-align:center;
-  background:#111a33;
-  border-bottom:2px solid #1e2f55;
-  color:#9fd5ff;
-  font-weight:bold;
-  box-shadow:0 0 15px #0ff3 inset;
-}
-.container{
-  padding:14px;
-  max-width:900px;
-  margin:auto;
-}
-
+body{margin:0;background:#0a0f1c;color:#e8edff;font-family:'Segoe UI',sans-serif;}
+header{padding:16px;text-align:center;background:#111a33;border-bottom:2px solid #1e2f55;
+  box-shadow:0 0 15px #0ff3 inset;color:#9fd5ff;font-weight:bold;}
+.container{padding:14px;max-width:900px;margin:auto;}
 select,input,textarea,button{
-  width:100%; padding:10px; border-radius:8px;
-  margin-top:8px; border:none; font-size:15px;
-  background:#162038; color:#cfe7ff;
-}
-button{
-  background:#1abfff; color:#001; font-weight:bold;
-  cursor:pointer; transition:0.2s;
-}
-button:hover{ box-shadow:0 0 8px #00eaff; }
-
-table{
-  width:100%; border-collapse:collapse; margin-top:12px;
-  font-size:13px;
-}
-th,td{
-  border:1px solid #234; padding:6px;
-}
-th{ background:#162850; color:#aee2ff; }
-tr.active{ background:#2b7cff !important; color:white; }
-tr.updated{ animation:flash 1.2s ease-out; }
-@keyframes flash { 0%{background:#33ff88;} 100%{background:transparent;} }
-
-.box{
-  background:#111c33; padding:12px; border-radius:12px;
-  box-shadow:0 0 10px #0ff3 inset; margin-top:16px;
-}
-
+  width:100%;padding:10px;border-radius:8px;margin-top:8px;border:none;
+  font-size:15px;background:#162038;color:#cfe7ff;}
+button{background:#1abfff;color:#001;font-weight:bold;cursor:pointer;transition:.2s;}
+button:hover{box-shadow:0 0 10px #00e5ff;}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+th,td{border:1px solid #234;padding:6px;}
+th{background:#162850;color:#aee2ff;}
+tr.updated{animation:updatedBlink 1.2s ease-out;}
+@keyframes updatedBlink{0%{background:#3aff85;}100%{background:transparent;}}
+.box{background:#111c33;padding:12px;border-radius:12px;margin-top:16px;
+  box-shadow:0 0 10px #0ff3 inset;}
 .hidden{display:none}
 .readonly{background:#0e1629;color:#8ca3c7;}
-
-#map{
-  height:350px; margin-top:10px;
-  border-radius:12px; box-shadow:0 0 12px #00eaff44;
-}
-
-/* SPINNER */
-#loading{
-  position:fixed;top:0;left:0;width:100vw;height:100vh;
-  background:#0008;display:flex;align-items:center;
-  justify-content:center;z-index:999;visibility:hidden;
-}
-.spinner{
-  width:60px;height:60px;border:8px solid #44eaff44;
-  border-top-color:#00eaff;border-radius:50%;
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.footer{
-  margin-top:20px;padding:12px;text-align:center;
-  font-size:12px;background:#111a33;color:#9bb7e6;
-  border-top:1px solid #1f2d55;
-}
+#map{height:350px;margin-top:12px;border-radius:12px;
+  box-shadow:0 0 12px #00eaff44;}
+#loading{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0008;
+  display:flex;align-items:center;justify-content:center;z-index:9999;visibility:hidden;}
+.spinner{width:60px;height:60px;border:8px solid #49dfff44;border-top-color:#00eaff;
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 
 <body>
-
 <div id="loading"><div class="spinner"></div></div>
 
-<header>
-  SISTEM VERIFIKASI & VALIDASI PJU TS – BARITO TIMUR<br>
-  <small style="font-weight:normal;color:#8db7ff">
-    DPUPRPERKIM (2021 & 2023) • DISHUB (2022)
-  </small>
-</header>
+<header>VERIFIKASI & VALIDASI PJU TS – BARITO TIMUR</header>
 
 <div class="container">
 
-<!-- Pilih tahun -->
 <label>Pilih Tahun Perolehan</label>
 <select id="tahunSelect">
   <option value="">-- Pilih Tahun --</option>
@@ -107,24 +50,23 @@ tr.updated{ animation:flash 1.2s ease-out; }
   <option>2023</option>
 </select>
 
-<button onclick="location.reload()" style="background:#22e6a7">🔄 Reload Halaman</button>
+<button onclick="reloadHalaman()" style="background:#22e6a7;margin-top:8px">
+  🔄 Reload Halaman
+</button>
 
-<!-- DATA ESDM -->
 <div class="box">
   <b>DATA TARGET ESDM</b>
   <table id="tabelEsdm">
     <thead>
       <tr>
         <th>ID</th><th>Kecamatan</th><th>Desa</th><th>Koordinat</th>
-        <th>Status</th><th>Wawancara</th><th>Catatan</th>
-        <th>Foto</th><th>Waktu</th>
+        <th>Status</th><th>Wawancara</th><th>Catatan</th><th>Foto</th><th>Waktu</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
-<!-- MAP -->
 <div id="map"></div>
 
 <button onclick="ambilLokasi()">📍 Ambil Posisi GPS</button>
@@ -134,13 +76,11 @@ tr.updated{ animation:flash 1.2s ease-out; }
 <input id="lngManual" placeholder="Longitude">
 <button onclick="prosesManual()">Proses Manual</button>
 
-<!-- FORM VERVAL -->
 <div class="box hidden" id="formVerval">
   <b>FORM VERVAL</b>
 
   <input id="rowIndex" class="readonly" readonly placeholder="Row Index">
   <input id="id_barang" class="readonly" readonly placeholder="ID Barang">
-
   <input id="nama_kecamatan" placeholder="Nama Kecamatan">
   <input id="nama_desa_lokasi" placeholder="Nama Desa/Lokasi">
 
@@ -151,7 +91,6 @@ tr.updated{ animation:flash 1.2s ease-out; }
   <input id="lng_verval" class="readonly" readonly placeholder="Lng Verval">
 
   <input id="petugas" placeholder="Petugas Verifikasi">
-
   <input id="status_validasi" class="readonly" readonly placeholder="Status Validasi">
   <input id="jarak" class="readonly" readonly placeholder="Jarak (meter)">
 
@@ -170,15 +109,11 @@ tr.updated{ animation:flash 1.2s ease-out; }
   <button id="btnSimpan" onclick="kirimVerval()">💾 SIMPAN VERVAL</button>
 </div>
 
-<!-- DATA VERVAL -->
 <div class="box">
   <b>DATA HASIL VERVAL</b>
   <table id="tabelVerval">
     <thead>
-      <tr>
-        <th>ID</th><th>Lokasi</th><th>Status</th>
-        <th>Petugas</th><th>Foto</th>
-      </tr>
+      <tr><th>ID</th><th>Lokasi</th><th>Status</th><th>Petugas</th><th>Foto</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -188,39 +123,34 @@ tr.updated{ animation:flash 1.2s ease-out; }
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-/* ================= CONFIG ================= */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
+/* ====================== CONFIG ====================== */
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
+
 const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
-// Ikon custom dari GitHub RAW
-const iconESDM = L.icon({
-  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
-  iconSize:[32,32],iconAnchor:[16,32]
-});
-const iconBARTIM = L.icon({
-  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
-  iconSize:[36,36],iconAnchor:[18,36]
-});
-
+/* ====================== SPINNER ====================== */
 function showLoad(){ loading.style.visibility="visible"; }
 function hideLoad(){ loading.style.visibility="hidden"; }
 
-/* ================= MAP ================= */
-let map = L.map('map').setView([-2.13,115.1],10);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-let layerESDM = L.layerGroup().addTo(map);
-let markerSaya;
+/* ====================== MAP ====================== */
+let map = L.map('map').setView([-2.13,115.10],10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-/* ================= LOAD TAHUN + CACHE ================= */
 let cacheTahun = {};
-let tahunTimeout=null;
-tahunSelect.onchange = ()=> {
+let markerSaya;
+let layerESDM = L.layerGroup().addTo(map);
+
+/* ====================== DEBOUNCE ====================== */
+let tahunTimeout = null;
+tahunSelect.onchange = function(){
   clearTimeout(tahunTimeout);
-  tahunTimeout=setTimeout(loadTahun,250);
+  tahunTimeout = setTimeout(loadTahun, 250);
 };
 
+/* ====================== LOAD TAHUN ====================== */
 function loadTahun(){
-  const tahun=tahunSelect.value;
+  const tahun = tahunSelect.value;
   if(!tahun){ tabelEsdm.querySelector("tbody").innerHTML=""; return; }
 
   if(cacheTahun[tahun]){
@@ -230,151 +160,146 @@ function loadTahun(){
   }
 
   showLoad();
-  fetch(PROXY + SCRIPT_URL + `?action=listByYear&year=${tahun}`)
+
+  const url = encodeURIComponent(SCRIPT_URL + "?action=listByYear&year=" + tahun);
+
+  fetch(PROXY + url)
     .then(r=>r.json())
     .then(j=>{
       hideLoad();
-      cacheTahun[tahun]=j.data;
+      cacheTahun[tahun] = j.data;
       renderTabel(j.data);
       renderPeta(j.data);
     })
-    .catch(e=>{hideLoad();alert("Gagal load: "+e);});
+    .catch(err=>{
+      hideLoad();
+      alert("❌ Gagal load data: " + err);
+    });
 }
 
-/* ================= TABEL ================= */
+/* ====================== RENDER TABEL ====================== */
 function renderTabel(list){
-  let rows="";
+  let html="";
   list.forEach(r=>{
-    rows+=`
-    <tr id="row${r.rowIndex}">
-      <td>${r.id_barang}</td>
-      <td>${r.nama_kecamatan}</td>
-      <td>${r.nama_desa_lokasi}</td>
-      <td>${r.lat_awal},${r.lng_awal}</td>
-      <td>${r.status_validasi||""}</td>
-      <td>${r.keterangan_wawancara||""}</td>
-      <td>${r.catatan_fisik||""}</td>
-      <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
-      <td>${r.waktu_simpan||""}</td>
-    </tr>`;
+    html+=`
+      <tr id="row${r.rowIndex}">
+        <td>${r.id_barang}</td>
+        <td>${r.nama_kecamatan}</td>
+        <td>${r.nama_desa_lokasi}</td>
+        <td>${r.lat_awal}, ${r.lng_awal}</td>
+        <td>${r.status_validasi||""}</td>
+        <td>${r.keterangan_wawancara||""}</td>
+        <td>${r.catatan_fisik||""}</td>
+        <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+        <td>${r.waktu_simpan||""}</td>
+      </tr>`;
   });
-  tabelEsdm.querySelector("tbody").innerHTML=rows;
+  tabelEsdm.querySelector("tbody").innerHTML = html;
 }
 
-/* ================= MAP RENDER ================= */
+/* ====================== RENDER MAP ====================== */
 function renderPeta(list){
   layerESDM.clearLayers();
-  list.forEach(d=>{
-    if(!d.lat_awal||!d.lng_awal) return;
-    const m=L.marker([d.lat_awal,d.lng_awal],{icon:iconESDM}).addTo(layerESDM);
-    m.on("click",()=> pilihTitik(d));
+  list.forEach(r=>{
+    if(!r.lat_awal || !r.lng_awal) return;
+    L.marker([r.lat_awal, r.lng_awal])
+      .addTo(layerESDM)
+      .on("click",()=> pilihTitik(r));
   });
 }
 
-/* ================= PILIH TITIK ================= */
+/* ====================== PILIH TITIK ====================== */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
-  rowIndex.value=d.rowIndex;
-  id_barang.value=d.id_barang;
-  nama_kecamatan.value=d.nama_kecamatan;
-  nama_desa_lokasi.value=d.nama_desa_lokasi;
-  lat_awal.value=d.lat_awal;
-  lng_awal.value=d.lng_awal;
 
-  highlightRow(d.rowIndex);
+  id_barang.value = d.id_barang;
+  nama_kecamatan.value = d.nama_kecamatan;
+  nama_desa_lokasi.value = d.nama_desa_lokasi;
+  rowIndex.value = d.rowIndex;
+  lat_awal.value = d.lat_awal;
+  lng_awal.value = d.lng_awal;
+
+  highlight(d.rowIndex);
 }
 
-function highlightRow(i){
-  let tr=document.getElementById("row"+i);
+function highlight(i){
+  const tr = document.getElementById("row"+i);
+  if(!tr) return;
   tr.classList.add("updated");
-  setTimeout(()=>tr.classList.remove("updated"),1200);
+  setTimeout(()=> tr.classList.remove("updated"), 1200);
 }
 
-/* ================= GPS ================= */
+/* ====================== MANUAL / GPS ====================== */
 function ambilLokasi(){
-  if(!navigator.geolocation) return alert("GPS tidak tersedia");
+  if(!navigator.geolocation) return alert("GPS tidak tersedia.");
   navigator.geolocation.getCurrentPosition(pos=>{
-    prosesTitik(pos.coords.latitude,pos.coords.longitude);
+    prosesTitik(pos.coords.latitude, pos.coords.longitude);
   });
 }
+
 function prosesManual(){
-  const lat=parseFloat(latManual.value), lng=parseFloat(lngManual.value);
-  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
-  prosesTitik(lat,lng);
+  const a=parseFloat(latManual.value), b=parseFloat(lngManual.value);
+  if(isNaN(a)||isNaN(b)) return alert("Koordinat tidak valid.");
+  prosesTitik(a,b);
 }
+
 function prosesTitik(lat,lng){
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya=L.marker([lat,lng],{icon:iconBARTIM}).addTo(map);
+  markerSaya = L.marker([lat,lng]).addTo(map);
   map.setView([lat,lng],17);
-  lat_verval.value=lat;
-  lng_verval.value=lng;
-
-  hitungStatusValidasi(lat,lng);
+  lat_verval.value = lat;
+  lng_verval.value = lng;
 }
 
-/* ================= HITUNG JARAK & VALIDASI ================= */
-function hitungJarak(lat1,lng1,lat2,lng2){
-  const R=6371000, rad=Math.PI/180;
-  const dLat=(lat2-lat1)*rad, dLng=(lng2-lng1)*rad;
-  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)**2;
-  return R*(2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
-}
-
-function hitungStatusValidasi(lat,lng){
-  const la=parseFloat(lat_awal.value);
-  const lo=parseFloat(lng_awal.value);
-  if(isNaN(la)||isNaN(lo)) return;
-
-  const jar=hitungJarak(lat,lng,la,lo);
-  jarak.value = jar.toFixed(1);
-
-  if(jar<30) status_validasi.value="Valid";
-  else if(jar<100) status_validasi.value="Bergeser (Suspect)";
-  else status_validasi.value="Lokasi Tidak Cocok";
-}
-
-/* ================= KIRIM VERVAL ================= */
+/* ====================== KIRIM VERVAL ====================== */
 async function kirimVerval(){
-  btnSimpan.disabled=true;
-  btnSimpan.innerHTML="⏳ Menyimpan...";
 
-  const file=foto_verval.files[0];
+  btnSimpan.disabled = true;
+  btnSimpan.innerText = "⏳ Menyimpan...";
+
+  const file = foto_verval.files[0];
   if(!file){ alert("Foto wajib!"); resetBtn(); return; }
 
-  const base64=await new Promise(res=>{
-    const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(file);
+  const base64 = await new Promise(res=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result);
+    r.readAsDataURL(file);
   });
 
-  const data={
+  const data = {
     action:"verval",
-    rowIndex:rowIndex.value,
-    id_barang:id_barang.value,
-    nama_kecamatan:nama_kecamatan.value,
-    nama_desa_lokasi:nama_desa_lokasi.value,
-    lat_awal:lat_awal.value,
-    lng_awal:lng_awal.value,
-    lat_verval:lat_verval.value,
-    lng_verval:lng_verval.value,
-    petugas_verval:petugas.value,
-    status_validasi:status_validasi.value,
-    status_fisik:status_fisik.value,
-    nama_narasumber:nama_narasumber.value,
-    ket_wawancara:ket_wawancara.value,
-    catatan_fisik:catatan.value,
-    fotoBase64:base64,
-    jarak:jarak.value
+    rowIndex: rowIndex.value,
+    id_barang: id_barang.value,
+    nama_kecamatan: nama_kecamatan.value,
+    nama_desa_lokasi: nama_desa_lokasi.value,
+    lat_awal: lat_awal.value,
+    lng_awal: lng_awal.value,
+    lat_verval: lat_verval.value,
+    lng_verval: lng_verval.value,
+    petugas_verval: petugas.value,
+    status_validasi: status_validasi.value,
+    status_fisik: status_fisik.value,
+    nama_narasumber: nama_narasumber.value,
+    ket_wawancara: ket_wawancara.value,
+    catatan_fisik: catatan.value,
+    fotoBase64: base64,
+    jarak: jarak.value
   };
 
   showLoad();
-  const res=await fetch(PROXY+SCRIPT_URL,{
+
+  const url = encodeURIComponent(SCRIPT_URL);
+
+  const res = await fetch(PROXY + url, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(data)
+    body: JSON.stringify(data)
   });
+
   hideLoad();
 
-  const j=await res.json();
-  alert(j.message||"Selesai");
+  const j = await res.json();
+  alert(j.message || "Selesai");
 
   resetBtn();
   loadVerval();
@@ -382,35 +307,37 @@ async function kirimVerval(){
 
 function resetBtn(){
   btnSimpan.disabled=false;
-  btnSimpan.innerHTML="💾 SIMPAN VERVAL";
+  btnSimpan.innerText="💾 SIMPAN VERVAL";
 }
 
-/* ================= LOAD VERVAL ================= */
+/* ====================== LOAD DATA VERVAL ====================== */
 function loadVerval(){
-  fetch(PROXY+SCRIPT_URL+"?action=listVerval")
+  const url = encodeURIComponent(SCRIPT_URL + "?action=listVerval");
+
+  fetch(PROXY + url)
     .then(r=>r.json())
     .then(j=>{
       let html="";
       j.data.forEach(r=>{
         html+=`
-        <tr>
-          <td>${r.id_barang}</td>
-          <td>${r.nama_desa_lokasi}</td>
-          <td>${r.status_validasi}</td>
-          <td>${r.petugas_verval}</td>
-          <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
-        </tr>`;
+          <tr>
+            <td>${r.id_barang}</td>
+            <td>${r.nama_desa_lokasi}</td>
+            <td>${r.status_validasi}</td>
+            <td>${r.petugas_verval}</td>
+            <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+          </tr>`;
       });
-      tabelVerval.querySelector("tbody").innerHTML=html;
+      tabelVerval.querySelector("tbody").innerHTML = html;
     });
 }
 
 loadVerval();
-</script>
 
-<footer class="footer">
-  © 2025 — DPUPRPERKIM Kabupaten Barito Timur
-</footer>
+/* ====================== RELOAD ====================== */
+function reloadHalaman(){ location.reload(); }
+
+</script>
 
 </body>
 </html>
