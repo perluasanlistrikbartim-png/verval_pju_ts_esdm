@@ -292,11 +292,10 @@ tr.updated {
 
 <script>
 /* ============================================================
-   ⚡ KONFIGURASI
+   ⚡ KONFIGURASI — FINAL
 ============================================================ */
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
-
 const PROXY =
   "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
@@ -308,7 +307,6 @@ function hideLoad(){ loading.style.visibility="hidden"; }
 ============================================================ */
 let map = L.map('map').setView([-2.13,115.10], 10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
 let cacheTahun = {};
 let markerSaya;
 let layerESDM = L.layerGroup().addTo(map);
@@ -328,24 +326,31 @@ const iconBartim = L.icon({
 });
 
 /* ============================================================
-   ⚡ LOAD DATA PER TAHUN (FIX TOTAL)
+   ⚡ PILIH TAHUN
 ============================================================ */
 let tahunTimeout=null;
-tahunSelect.onchange=()=>{clearTimeout(tahunTimeout);tahunTimeout=setTimeout(loadTahun,200);};
+tahunSelect.onchange=function(){
+  clearTimeout(tahunTimeout);
+  tahunTimeout=setTimeout(loadTahun,250);
+};
 
+/* ============================================================
+   ⚡ LOAD DATA PER TAHUN — FIX
+============================================================ */
 function loadTahun(){
   const tahun=tahunSelect.value;
-  if(!tahun){tabelEsdm.querySelector("tbody").innerHTML="";return;}
-
+  if(!tahun){
+    tabelEsdm.querySelector("tbody").innerHTML="";
+    layerESDM.clearLayers();
+    return;
+  }
   if(cacheTahun[tahun]){
     renderTabel(cacheTahun[tahun]);
     renderPeta(cacheTahun[tahun]);
     return;
   }
-
   showLoad();
   const url = SCRIPT_URL + "?action=listByYear&year=" + tahun;
-
   fetch(PROXY + url)
     .then(r=>r.json())
     .then(j=>{
@@ -361,7 +366,7 @@ function loadTahun(){
 }
 
 /* ============================================================
-   ⚡ TABEL & PETA
+   ⚡ TABEL
 ============================================================ */
 function renderTabel(list){
   tabelEsdm.querySelector("tbody").innerHTML=list.map(r=>`
@@ -377,6 +382,10 @@ function renderTabel(list){
       <td>${r.waktu_simpan||""}</td>
     </tr>`).join("");
 }
+
+/* ============================================================
+   ⚡ PETA
+============================================================ */
 function renderPeta(list){
   layerESDM.clearLayers();
   list.forEach(r=>{
@@ -423,27 +432,25 @@ function hitungJarak(){
   const R=6371000;
   const dLat=(lat_verval.value-lat_awal.value)*Math.PI/180;
   const dLng=(lng_verval.value-lng_awal.value)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat_awal.value*Math.PI/180)*Math.cos(lat_verval.value*Math.PI/180)*Math.sin(dLng/2)**2;
+  const a=Math.sin(dLat/2)**2+
+    Math.cos(lat_awal.value*Math.PI/180)*
+    Math.cos(lat_verval.value*Math.PI/180)*
+    Math.sin(dLng/2)**2;
   jarak.value=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))+" m";
 }
 
 /* ============================================================
-   ⚡ SIMPAN VERVAL (POLA TINJU – AMAN)
+   ✅ SIMPAN VERVAL — FINAL FIX
 ============================================================ */
 async function kirimVerval(){
   btnSimpan.disabled=true;
   btnSimpan.innerText="⏳ Menyimpan...";
-
   try{
     const f=foto_verval.files[0];
     if(!f) throw "Foto wajib diupload";
-
     const b64=await new Promise(r=>{
-      const fr=new FileReader();
-      fr.onload=()=>r(fr.result);
-      fr.readAsDataURL(f);
+      const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f);
     });
-
     const payload={
       action:"verval",
       rowIndex:rowIndex.value||"",
@@ -466,7 +473,6 @@ async function kirimVerval(){
       metode_verifikasi:"GPS",
       fotoBase64:b64
     };
-
     showLoad();
     const res=await fetch(PROXY+SCRIPT_URL,{
       method:"POST",
@@ -475,10 +481,8 @@ async function kirimVerval(){
     });
     const j=await res.json();
     hideLoad();
-
-    if(j.status!=="success") throw j.message;
+    if(j.status!=="success") throw j.message||"Gagal simpan";
     alert("✅ VERVAL BERHASIL DISIMPAN");
-
   }catch(e){
     hideLoad();
     alert("❌ "+e);
@@ -487,13 +491,12 @@ async function kirimVerval(){
     btnSimpan.innerText="💾 SIMPAN VERVAL";
   }
 }
+
+/* ============================================================
+   🔄 RELOAD
+============================================================ */
+function reloadHalaman(){ location.reload(); }
 </script>
-
-
-
-
-
-
 
 <!-- ============================================================
      ⚡ FOOTER PREMIUM
