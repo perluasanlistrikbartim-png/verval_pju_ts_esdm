@@ -291,137 +291,147 @@ tr.updated {
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-/* ============================================================
-   ⚡ KONFIGURASI — FINAL
-============================================================ */
-const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
-const PROXY =
-  "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
+document.addEventListener("DOMContentLoaded", () => {
 
+/* ================= KONFIG ================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
+const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
+
+/* ================= DOM ================= */
+const tahunSelect = document.getElementById("tahunSelect");
+const tabelEsdm   = document.getElementById("tabelEsdm");
+const tabelVerval = document.getElementById("tabelVerval");
+const loading     = document.getElementById("loading");
+const formVerval  = document.getElementById("formVerval");
+
+const rowIndex        = document.getElementById("rowIndex");
+const id_barang       = document.getElementById("id_barang");
+const nama_kecamatan  = document.getElementById("nama_kecamatan");
+const nama_desa_lokasi= document.getElementById("nama_desa_lokasi");
+const lat_awal        = document.getElementById("lat_awal");
+const lng_awal        = document.getElementById("lng_awal");
+const lat_verval      = document.getElementById("lat_verval");
+const lng_verval      = document.getElementById("lng_verval");
+const petugas         = document.getElementById("petugas");
+const status_validasi = document.getElementById("status_validasi");
+const status_fisik    = document.getElementById("status_fisik");
+const nama_narasumber = document.getElementById("nama_narasumber");
+const ket_wawancara   = document.getElementById("ket_wawancara");
+const catatan         = document.getElementById("catatan");
+const jarak           = document.getElementById("jarak");
+const foto_verval     = document.getElementById("foto_verval");
+const btnSimpan       = document.getElementById("btnSimpan");
+
+/* ================= LOADING ================= */
 function showLoad(){ loading.style.visibility="visible"; }
 function hideLoad(){ loading.style.visibility="hidden"; }
 
-/* ============================================================
-   ⚡ MAP
-============================================================ */
-let map = L.map('map').setView([-2.13,115.10], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let cacheTahun = {};
-let markerSaya;
-let layerESDM = L.layerGroup().addTo(map);
+/* ================= MAP ================= */
+const map = L.map("map").setView([-2.13,115.10],10);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+const layerESDM = L.layerGroup().addTo(map);
 
-/* ============================================================
-   ⚡ ICON
-============================================================ */
 const iconEsdm = L.icon({
-  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
-  iconSize: [42, 42],
-  iconAnchor: [21, 42],
+  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
+  iconSize:[42,42], iconAnchor:[21,42]
 });
 const iconBartim = L.icon({
-  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
-  iconSize: [42, 42],
-  iconAnchor: [21, 42],
+  iconUrl:"https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
+  iconSize:[42,42], iconAnchor:[21,42]
 });
 
-/* ============================================================
-   ⚡ PILIH TAHUN
-============================================================ */
-let tahunTimeout=null;
-tahunSelect.onchange=function(){
-  clearTimeout(tahunTimeout);
-  tahunTimeout=setTimeout(loadTahun,250);
-};
+let markerSaya=null;
+const cacheTahun={};
 
-/* ============================================================
-   ⚡ LOAD DATA PER TAHUN — FIX
-============================================================ */
+/* ================= EVENT ================= */
+tahunSelect.addEventListener("change", loadTahun);
+
+/* ================= LOAD TAHUN ================= */
 function loadTahun(){
-  const tahun=tahunSelect.value;
-  if(!tahun){
-    tabelEsdm.querySelector("tbody").innerHTML="";
-    layerESDM.clearLayers();
-    return;
-  }
+  const tahun = tahunSelect.value;
+
+  tabelEsdm.querySelector("tbody").innerHTML="";
+  layerESDM.clearLayers();
+  if(!tahun) return;
+
   if(cacheTahun[tahun]){
-    renderTabel(cacheTahun[tahun]);
-    renderPeta(cacheTahun[tahun]);
+    renderAll(cacheTahun[tahun]);
     return;
   }
+
   showLoad();
-  const url = SCRIPT_URL + "?action=listByYear&year=" + tahun;
-  fetch(PROXY + url)
+  const url = `${SCRIPT_URL}?action=listByYear&year=${tahun}`;
+
+  fetch(PROXY + encodeURIComponent(url))
     .then(r=>r.json())
     .then(j=>{
       hideLoad();
-      cacheTahun[tahun]=j.data||[];
-      renderTabel(j.data||[]);
-      renderPeta(j.data||[]);
+      const data=j.data||[];
+      cacheTahun[tahun]=data;
+      renderAll(data);
     })
     .catch(e=>{
       hideLoad();
-      alert("❌ Gagal load data: "+e);
+      alert("Gagal load data: "+e);
     });
 }
 
-/* ============================================================
-   ⚡ TABEL
-============================================================ */
-function renderTabel(list){
-  tabelEsdm.querySelector("tbody").innerHTML=list.map(r=>`
+/* ================= RENDER ================= */
+function renderAll(data){
+  renderTabel(data);
+  renderPeta(data);
+}
+function renderTabel(data){
+  tabelEsdm.querySelector("tbody").innerHTML = data.map(r=>`
     <tr id="row${r.rowIndex}">
       <td>${r.id_barang}</td>
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
-      <td>${r.lat_awal&&r.lng_awal?`<a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">📍</a>`:"-"}</td>
+      <td>${r.lat_awal?`<a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">📍</a>`:"-"}</td>
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
       <td>${r.catatan_fisik||""}</td>
       <td>${r.link_foto_verval?`<a target="_blank" href="${r.link_foto_verval}">📷</a>`:"-"}</td>
       <td>${r.waktu_simpan||""}</td>
-    </tr>`).join("");
+    </tr>
+  `).join("");
 }
-
-/* ============================================================
-   ⚡ PETA
-============================================================ */
-function renderPeta(list){
+function renderPeta(data){
   layerESDM.clearLayers();
-  list.forEach(r=>{
-    if(!r.lat_awal||!r.lng_awal)return;
+  data.forEach(r=>{
+    if(!r.lat_awal||!r.lng_awal) return;
     L.marker([r.lat_awal,r.lng_awal],{icon:iconEsdm})
       .addTo(layerESDM)
       .on("click",()=>pilihTitik(r));
   });
 }
 
-/* ============================================================
-   ⚡ PILIH TITIK
-============================================================ */
+/* ================= PILIH TITIK ================= */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
+  rowIndex.value=d.rowIndex;
   id_barang.value=d.id_barang;
   nama_kecamatan.value=d.nama_kecamatan;
   nama_desa_lokasi.value=d.nama_desa_lokasi;
-  rowIndex.value=d.rowIndex;
   lat_awal.value=d.lat_awal;
   lng_awal.value=d.lng_awal;
 }
 
-/* ============================================================
-   ⚡ GPS & JARAK
-============================================================ */
-function ambilLokasi(){
+/* ================= GPS & JARAK ================= */
+window.ambilLokasi = function(){
+  if(!navigator.geolocation) return alert("GPS tidak tersedia");
   navigator.geolocation.getCurrentPosition(p=>{
     prosesTitik(p.coords.latitude,p.coords.longitude);
   });
 }
-function prosesManual(){
-  prosesTitik(parseFloat(latManual.value),parseFloat(lngManual.value));
+window.prosesManual = function(){
+  const lat=parseFloat(document.getElementById("latManual").value);
+  const lng=parseFloat(document.getElementById("lngManual").value);
+  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
+  prosesTitik(lat,lng);
 }
 function prosesTitik(lat,lng){
-  if(markerSaya)map.removeLayer(markerSaya);
+  if(markerSaya) map.removeLayer(markerSaya);
   markerSaya=L.marker([lat,lng],{icon:iconBartim}).addTo(map);
   map.setView([lat,lng],17);
   lat_verval.value=lat;
@@ -429,28 +439,29 @@ function prosesTitik(lat,lng){
   hitungJarak();
 }
 function hitungJarak(){
+  if(!lat_awal.value||!lng_awal.value||!lat_verval.value||!lng_verval.value) return;
   const R=6371000;
   const dLat=(lat_verval.value-lat_awal.value)*Math.PI/180;
   const dLng=(lng_verval.value-lng_awal.value)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+
-    Math.cos(lat_awal.value*Math.PI/180)*
-    Math.cos(lat_verval.value*Math.PI/180)*
+  const a=Math.sin(dLat/2)**2 +
+    Math.cos(lat_awal.value*Math.PI/180)*Math.cos(lat_verval.value*Math.PI/180)*
     Math.sin(dLng/2)**2;
   jarak.value=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))+" m";
 }
 
-/* ============================================================
-   ✅ SIMPAN VERVAL — FINAL FIX
-============================================================ */
-async function kirimVerval(){
-  btnSimpan.disabled=true;
-  btnSimpan.innerText="⏳ Menyimpan...";
+/* ================= KIRIM VERVAL ================= */
+window.kirimVerval = async function(){
+  btnSimpan.disabled=true; btnSimpan.innerText="⏳ Menyimpan...";
   try{
-    const f=foto_verval.files[0];
-    if(!f) throw "Foto wajib diupload";
-    const b64=await new Promise(r=>{
-      const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f);
+    const file=foto_verval.files[0];
+    if(!file) throw new Error("Foto wajib diupload");
+
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result); r.onerror=rej;
+      r.readAsDataURL(file);
     });
+
     const payload={
       action:"verval",
       rowIndex:rowIndex.value||"",
@@ -463,7 +474,7 @@ async function kirimVerval(){
       lat_verval:lat_verval.value,
       lng_verval:lng_verval.value,
       petugas_verval:petugas.value,
-      status_validasi:"Terverifikasi",
+      status_validasi:status_validasi.value||"Terverifikasi",
       status_fisik:status_fisik.value,
       nama_narasumber:nama_narasumber.value,
       keterangan_wawancara:ket_wawancara.value,
@@ -471,32 +482,34 @@ async function kirimVerval(){
       jarak_selisih_meter:jarak.value,
       akurasi_gps_meter:0,
       metode_verifikasi:"GPS",
-      fotoBase64:b64
+      fotoBase64:base64
     };
+
     showLoad();
-    const res=await fetch(PROXY+SCRIPT_URL,{
+    const res=await fetch(PROXY+encodeURIComponent(SCRIPT_URL),{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{ "Content-Type":"application/json" },
       body:JSON.stringify(payload)
     });
     const j=await res.json();
     hideLoad();
-    if(j.status!=="success") throw j.message||"Gagal simpan";
-    alert("✅ VERVAL BERHASIL DISIMPAN");
+    if(j.status!=="success") throw new Error(j.message||"Gagal simpan");
+    alert("✅ Verval tersimpan");
+    loadTahun(); // refresh data tahun aktif
   }catch(e){
     hideLoad();
-    alert("❌ "+e);
+    alert("❌ "+e.message);
   }finally{
-    btnSimpan.disabled=false;
-    btnSimpan.innerText="💾 SIMPAN VERVAL";
+    btnSimpan.disabled=false; btnSimpan.innerText="💾 SIMPAN VERVAL";
   }
 }
 
-/* ============================================================
-   🔄 RELOAD
-============================================================ */
-function reloadHalaman(){ location.reload(); }
+/* ================= UTIL ================= */
+window.reloadHalaman = function(){ location.reload(); }
+
+}); // DOMContentLoaded
 </script>
+
 
 <!-- ============================================================
      ⚡ FOOTER PREMIUM
