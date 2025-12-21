@@ -565,101 +565,118 @@ async function kirimVerval(){
   btnSimpan.disabled = true;
   btnSimpan.innerText = "⏳ Menyimpan...";
 
-  const file = foto_verval.files[0];
-  if(!file){
-    alert("Foto verval wajib!");
-    resetBtn();
-    return;
-  }
+  try {
 
-  const base64 = await new Promise(resolve => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.readAsDataURL(file);
-  });
+    /* ================================
+       VALIDASI FOTO
+    ================================= */
+    const file = foto_verval.files[0];
+    if(!file){
+      alert("❌ Foto verval wajib diupload!");
+      resetBtn();
+      return;
+    }
 
-  /* ========================================================
-     ⚠ PAYLOAD YANG BENAR UNTUK GAS (22 KOLOM)
-  ======================================================== */
-  const payload = {
-    action: "verval",
-    rowIndex: rowIndex.value,
-
-    tahun_perolehan: tahunSelect.value,   // FIX WAJIB
-    id_barang: id_barang.value,
-    nama_kecamatan: nama_kecamatan.value,
-    nama_desa_lokasi: nama_desa_lokasi.value,
-
-    lat_awal: lat_awal.value,
-    lng_awal: lng_awal.value,
-
-    lat_verval: lat_verval.value,
-    lng_verval: lng_verval.value,
-
-    petugas_verval: petugas.value,
-    status_validasi: status_validasi.value,
-
-    status_fisik: status_fisik.value,
-    nama_narasumber: nama_narasumber.value,
-
-    keterangan_wawancara: ket_wawancara.value,
-    catatan_fisik: catatan.value,
-
-    fotoBase64: base64,
-
-    akurasi_gps_meter: 0,                // FIX
-    jarak_selisih_meter: jarak.value,    // FIX
-
-    metode_verifikasi: "GPS"             // FIX
-  };
-
-  showLoad();
-
-  const res = await fetch(SCRIPT_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  hideLoad();
-
-  const j = await res.json();
-  alert(j.message || "Berhasil disimpan");
-
-  resetBtn();
-  loadVerval();
-}
-
-function resetBtn(){
-  btnSimpan.disabled = false;
-  btnSimpan.innerText = "💾 SIMPAN VERVAL";
-}
-
-/* ============================================================
-   ⚡ LOAD DATA VERVAL
-============================================================ */
-function loadVerval(){
-  const url = `${SCRIPT_URL}?action=listVerval`;
-
-  fetch(PROXY + encodeURIComponent(url))
-    .then(res => res.json())
-    .then(j => {
-      let html = "";
-      j.data.forEach(r => {
-        html += `
-          <tr>
-            <td>${r.id_barang}</td>
-            <td>${r.nama_desa_lokasi}</td>
-            <td>${r.status_validasi}</td>
-            <td>${r.petugas_verval}</td>
-            <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>` : "-"}</td>
-          </tr>`;
-      });
-      tabelVerval.querySelector("tbody").innerHTML = html;
+    /* ================================
+       KONVERSI FOTO → BASE64
+    ================================= */
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = err => reject(err);
+      reader.readAsDataURL(file);
     });
+
+    /* ================================
+       PAYLOAD MATCH 22 KOLOM GAS
+    ================================= */
+    const payload = {
+      action: "verval",
+
+      // identitas baris
+      rowIndex: rowIndex.value || "",
+
+      // WAJIB untuk listByYear
+      tahun_perolehan: tahunSelect.value,
+
+      // data utama
+      id_barang: id_barang.value,
+      nama_kecamatan: nama_kecamatan.value,
+      nama_desa_lokasi: nama_desa_lokasi.value,
+
+      // koordinat awal
+      lat_awal: lat_awal.value,
+      lng_awal: lng_awal.value,
+
+      // koordinat verval
+      lat_verval: lat_verval.value,
+      lng_verval: lng_verval.value,
+
+      // validasi
+      petugas_verval: petugas.value,
+      status_validasi: status_validasi.value || "Terverifikasi",
+
+      // fisik & wawancara
+      status_fisik: status_fisik.value,
+      nama_narasumber: nama_narasumber.value,
+      keterangan_wawancara: ket_wawancara.value,
+      catatan_fisik: catatan.value,
+
+      // tambahan wajib GAS
+      akurasi_gps_meter: 0,
+      jarak_selisih_meter: jarak.value,
+      metode_verifikasi: "GPS",
+
+      // foto
+      fotoBase64: base64
+    };
+
+    /* ================================
+       🔥 POST LEWAT PROXY (ANTI CORS)
+    ================================= */
+    showLoad();
+
+    const res = await fetch(
+      PROXY + encodeURIComponent(SCRIPT_URL),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if(!res.ok){
+      throw new Error("HTTP Error " + res.status);
+    }
+
+    const json = await res.json();
+
+    hideLoad();
+
+    if(json.status !== "success"){
+      throw new Error(json.message || "Gagal menyimpan data");
+    }
+
+    alert("✅ " + (json.message || "Data verval berhasil disimpan"));
+
+    // refresh tabel verval
+    loadVerval();
+
+  } catch(err){
+
+    hideLoad();
+    console.error("ERROR kirimVerval:", err);
+    alert("❌ Gagal menyimpan verval:\n" + err.message);
+
+  } finally {
+
+    resetBtn();
+
+  }
 }
 
-loadVerval();
 
 /* ============================================================
    ⚡ RELOAD
