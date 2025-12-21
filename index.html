@@ -387,7 +387,19 @@ function renderTabel(data){
       <td>${r.id_barang}</td>
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
-      <td>${r.lat_awal?`<a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">📍</a>`:"-"}</td>
+      <td>
+  ${r.lat_awal
+    ? `
+      <a target="_blank"
+         href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}"
+         style="color:#4ae2ff;text-decoration:none">
+        📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
+      </a>
+    `
+    : "-"
+  }
+</td>
+
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
       <td>${r.catatan_fisik||""}</td>
