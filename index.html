@@ -290,6 +290,383 @@ tr.updated {
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<script>
+/* ============================================================
+   ⚡ KONFIGURASI
+============================================================ */
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
+
+const PROXY =
+  "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
+
+function showLoad(){ loading.style.visibility="visible"; }
+function hideLoad(){ loading.style.visibility="hidden"; }
+
+/* ============================================================
+   ⚡ MAP LEAFLET
+============================================================ */
+let map = L.map('map').setView([-2.13,115.10], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(map);
+
+let cacheTahun = {};
+let markerSaya;
+let layerESDM = L.layerGroup().addTo(map);
+
+/* ============================================================
+   ⚡ CUSTOM ICON ESDM & BARTIM
+============================================================ */
+const iconEsdm = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/esdm.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 42],
+});
+
+const iconBartim = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/perluasanlistrikbartim-png/verval_pju_ts_esdm/main/bartim.png",
+  iconSize: [42, 42],
+  iconAnchor: [21, 42],
+});
+
+/* ============================================================
+   ⚡ DEBOUNCE PILIH TAHUN
+============================================================ */
+let tahunTimeout = null;
+
+tahunSelect.onchange = function(){
+  clearTimeout(tahunTimeout);
+  tahunTimeout = setTimeout(loadTahun, 250);
+};
+
+/* ============================================================
+   ⚡ LOAD DATA PER TAHUN — FIX
+============================================================ */
+function loadTahun(){
+  const tahun = tahunSelect.value;
+
+  if(!tahun){
+    tabelEsdm.querySelector("tbody").innerHTML = "";
+    return;
+  }
+
+  if(cacheTahun[tahun]){
+    renderTabel(cacheTahun[tahun]);
+    renderPeta(cacheTahun[tahun]);
+    return;
+  }
+
+  showLoad();
+  const url = `${SCRIPT_URL}?action=listByYear&year=${tahun}`;
+
+  fetch(PROXY + encodeURIComponent(url))
+    .then(res => res.json())
+    .then(j => {
+      hideLoad();
+      cacheTahun[tahun] = j.data;
+      renderTabel(j.data);
+      renderPeta(j.data);
+    })
+    .catch(err => {
+      hideLoad();
+      alert("❌ Gagal load data: " + err);
+    });
+}
+
+/* ============================================================
+   ⚡ RENDER TABEL
+============================================================ */
+function renderTabel(list){
+  let html = "";
+
+  list.forEach(r => {
+    const mapsLink =
+      r.lat_awal && r.lng_awal
+        ? `<a style="color:#4ae2ff" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}" target="_blank">📍 ${r.lat_awal}, ${r.lng_awal}</a>`
+        : "-";
+
+    html += `
+      <tr id="row${r.rowIndex}">
+        <td>${r.id_barang}</td>
+        <td>${r.nama_kecamatan}</td>
+        <td>${r.nama_desa_lokasi}</td>
+        <td>${mapsLink}</td>
+        <td>${r.status_validasi || ""}</td>
+        <td>${r.keterangan_wawancara || ""}</td>
+        <td>${r.catatan_fisik || ""}</td>
+        <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>` : "-"}</td>
+        <td>${r.waktu_simpan || ""}</td>
+      </tr>`;
+  });
+
+  tabelEsdm.querySelector("tbody").innerHTML = html;
+}
+
+/* ============================================================
+   ⚡ RENDER PETA
+============================================================ */
+function renderPeta(list){
+  layerESDM.clearLayers();
+
+  list.forEach(r => {
+    if(!r.lat_awal || !r.lng_awal) return;
+
+    L.marker([r.lat_awal, r.lng_awal], { icon: iconEsdm })
+      .addTo(layerESDM)
+      .on("click", () => pilihTitik(r));
+  });
+}
+
+/* ============================================================
+   ⚡ PILIH TITIK → TAMPILKAN FORM
+============================================================ */
+function pilihTitik(d){
+  formVerval.classList.remove("hidden");
+
+  id_barang.value        = d.id_barang;
+  nama_kecamatan.value   = d.nama_kecamatan;
+  nama_desa_lokasi.value = d.nama_desa_lokasi;
+  rowIndex.value         = d.rowIndex;
+
+  lat_awal.value = d.lat_awal;
+  lng_awal.value = d.lng_awal;
+
+  highlightRow(d.rowIndex);
+}
+
+function highlightRow(i){
+  const tr = document.getElementById("row" + i);
+  if(!tr) return;
+  tr.classList.add("updated");
+  setTimeout(() => tr.classList.remove("updated"), 1200);
+}
+
+/* ============================================================
+   ⚡ GPS & MANUAL INPUT
+============================================================ */
+function ambilLokasi(){   // FIX: sebelumnya "ffunction"
+  if(!navigator.geolocation)
+    return alert("GPS tidak tersedia.");
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    const tahun = tahunSelect.value;
+    const list = cacheTahun[tahun];
+    if(!list) return alert("Data ESDM belum dimuat.");
+
+    const nearest = cariTerdekat(lat, lng, list);
+    if(nearest) pilihTitik(nearest);
+
+    prosesTitik(lat, lng);
+  });
+}
+
+function prosesManual(){
+  const lat = parseFloat(latManual.value);
+  const lng = parseFloat(lngManual.value);
+
+  if(isNaN(lat) || isNaN(lng))
+    return alert("Koordinat tidak valid.");
+
+  const tahun = tahunSelect.value;
+  const list = cacheTahun[tahun];
+  if(!list) return alert("Data belum dimuat.");
+
+  const nearest = cariTerdekat(lat, lng, list);
+  if(nearest) pilihTitik(nearest);
+
+  prosesTitik(lat, lng);
+}
+
+function prosesTitik(lat, lng){
+  if(markerSaya) map.removeLayer(markerSaya);
+
+  markerSaya = L.marker([lat, lng], { icon: iconBartim }).addTo(map);
+  map.setView([lat, lng], 17);
+
+  lat_verval.value = lat;
+  lng_verval.value = lng;
+
+  hitungJarak();
+
+  if(!rowIndex.value){
+    return alert("⚠ Pilih dulu titik ESDM!");
+  }
+
+  formVerval.classList.remove("hidden");
+}
+
+/* ============================================================
+   ⚡ HITUNG JARAK
+============================================================ */
+function hitungJarak(){
+  if(!lat_verval.value || !lng_verval.value) return;
+
+  let lat1 = parseFloat(lat_awal.value);
+  let lon1 = parseFloat(lng_awal.value);
+  let lat2 = parseFloat(lat_verval.value);
+  let lon2 = parseFloat(lng_verval.value);
+
+  const R = 6371000;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const d = R * c;
+
+  jarak.value = Math.round(d) + " m";
+}
+
+/* ============================================================
+   ⚡ CARI TERDEKAT
+============================================================ */
+function cariTerdekat(lat, lng, list){
+  let minDist = Infinity;
+  let nearest = null;
+
+  list.forEach(r => {
+    if(!r.lat_awal || !r.lng_awal) return;
+
+    const R = 6371000;
+    const dLat = (lat - r.lat_awal) * Math.PI/180;
+    const dLng = (lng - r.lng_awal) * Math.PI/180;
+
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(r.lat_awal*Math.PI/180) *
+      Math.cos(lat*Math.PI/180) *
+      Math.sin(dLng/2)**2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c;
+
+    if(d < minDist){
+      minDist = d;
+      nearest = r;
+    }
+  });
+
+  return nearest;
+}
+
+/* ============================================================
+   ⚡ KIRIM VERVAL — FIX TOTAL
+============================================================ */
+async function kirimVerval(){
+
+  btnSimpan.disabled = true;
+  btnSimpan.innerText = "⏳ Menyimpan...";
+
+  const file = foto_verval.files[0];
+  if(!file){
+    alert("Foto verval wajib!");
+    resetBtn();
+    return;
+  }
+
+  const base64 = await new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(file);
+  });
+
+  /* ========================================================
+     ⚠ PAYLOAD YANG BENAR UNTUK GAS (22 KOLOM)
+  ======================================================== */
+  const payload = {
+    action: "verval",
+    rowIndex: rowIndex.value,
+
+    tahun_perolehan: tahunSelect.value,   // FIX WAJIB
+    id_barang: id_barang.value,
+    nama_kecamatan: nama_kecamatan.value,
+    nama_desa_lokasi: nama_desa_lokasi.value,
+
+    lat_awal: lat_awal.value,
+    lng_awal: lng_awal.value,
+
+    lat_verval: lat_verval.value,
+    lng_verval: lng_verval.value,
+
+    petugas_verval: petugas.value,
+    status_validasi: status_validasi.value,
+
+    status_fisik: status_fisik.value,
+    nama_narasumber: nama_narasumber.value,
+
+    keterangan_wawancara: ket_wawancara.value,
+    catatan_fisik: catatan.value,
+
+    fotoBase64: base64,
+
+    akurasi_gps_meter: 0,                // FIX
+    jarak_selisih_meter: jarak.value,    // FIX
+
+    metode_verifikasi: "GPS"             // FIX
+  };
+
+  showLoad();
+
+  const res = await fetch(SCRIPT_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  hideLoad();
+
+  const j = await res.json();
+  alert(j.message || "Berhasil disimpan");
+
+  resetBtn();
+  loadVerval();
+}
+
+function resetBtn(){
+  btnSimpan.disabled = false;
+  btnSimpan.innerText = "💾 SIMPAN VERVAL";
+}
+
+/* ============================================================
+   ⚡ LOAD DATA VERVAL
+============================================================ */
+function loadVerval(){
+  const url = `${SCRIPT_URL}?action=listVerval`;
+
+  fetch(PROXY + encodeURIComponent(url))
+    .then(res => res.json())
+    .then(j => {
+      let html = "";
+      j.data.forEach(r => {
+        html += `
+          <tr>
+            <td>${r.id_barang}</td>
+            <td>${r.nama_desa_lokasi}</td>
+            <td>${r.status_validasi}</td>
+            <td>${r.petugas_verval}</td>
+            <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>` : "-"}</td>
+          </tr>`;
+      });
+      tabelVerval.querySelector("tbody").innerHTML = html;
+    });
+}
+
+loadVerval();
+
+/* ============================================================
+   ⚡ RELOAD
+============================================================ */
+function reloadHalaman(){ location.reload(); }
+
+</script>
 
 
 
