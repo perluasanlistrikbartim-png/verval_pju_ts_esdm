@@ -295,12 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ================= KONFIG ================= */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzz7URJnz_3tqSCv2i-rUt4cgkFHwI6pH7JRidzSwkzczTIUlUO5f0NGs7yMCZZOvDTgg/exec";
-const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
 /* ================= DOM ================= */
 const tahunSelect = document.getElementById("tahunSelect");
 const tabelEsdm   = document.getElementById("tabelEsdm");
-const tabelVerval = document.getElementById("tabelVerval");
 const loading     = document.getElementById("loading");
 const formVerval  = document.getElementById("formVerval");
 
@@ -319,7 +317,6 @@ const nama_narasumber = document.getElementById("nama_narasumber");
 const ket_wawancara   = document.getElementById("ket_wawancara");
 const catatan         = document.getElementById("catatan");
 const jarak           = document.getElementById("jarak");
-const foto_verval     = document.getElementById("foto_verval");
 const btnSimpan       = document.getElementById("btnSimpan");
 
 /* ================= LOADING ================= */
@@ -349,7 +346,6 @@ tahunSelect.addEventListener("change", loadTahun);
 /* ================= LOAD TAHUN ================= */
 function loadTahun(){
   const tahun = tahunSelect.value;
-
   tabelEsdm.querySelector("tbody").innerHTML="";
   layerESDM.clearLayers();
   if(!tahun) return;
@@ -360,9 +356,7 @@ function loadTahun(){
   }
 
   showLoad();
-  const url = `${SCRIPT_URL}?action=listByYear&year=${tahun}`;
-
-  fetch(PROXY + encodeURIComponent(url))
+  fetch(`${SCRIPT_URL}?action=listByYear&year=${tahun}`)
     .then(r=>r.json())
     .then(j=>{
       hideLoad();
@@ -372,7 +366,7 @@ function loadTahun(){
     })
     .catch(e=>{
       hideLoad();
-      alert("Gagal load data: "+e);
+      alert("❌ Gagal load data: "+e);
     });
 }
 
@@ -381,25 +375,19 @@ function renderAll(data){
   renderTabel(data);
   renderPeta(data);
 }
+
 function renderTabel(data){
   tabelEsdm.querySelector("tbody").innerHTML = data.map(r=>`
-    <tr id="row${r.rowIndex}">
+    <tr>
       <td>${r.id_barang}</td>
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
       <td>
-  ${r.lat_awal
-    ? `
-      <a target="_blank"
-         href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}"
-         style="color:#4ae2ff;text-decoration:none">
-        📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
-      </a>
-    `
-    : "-"
-  }
-</td>
-
+        ${r.lat_awal ? 
+          `<a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
+            📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
+           </a>` : "-"}
+      </td>
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
       <td>${r.catatan_fisik||""}</td>
@@ -408,6 +396,7 @@ function renderTabel(data){
     </tr>
   `).join("");
 }
+
 function renderPeta(data){
   layerESDM.clearLayers();
   data.forEach(r=>{
@@ -431,17 +420,11 @@ function pilihTitik(d){
 
 /* ================= GPS & JARAK ================= */
 window.ambilLokasi = function(){
-  if(!navigator.geolocation) return alert("GPS tidak tersedia");
   navigator.geolocation.getCurrentPosition(p=>{
     prosesTitik(p.coords.latitude,p.coords.longitude);
   });
-}
-window.prosesManual = function(){
-  const lat=parseFloat(document.getElementById("latManual").value);
-  const lng=parseFloat(document.getElementById("lngManual").value);
-  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
-  prosesTitik(lat,lng);
-}
+};
+
 function prosesTitik(lat,lng){
   if(markerSaya) map.removeLayer(markerSaya);
   markerSaya=L.marker([lat,lng],{icon:iconBartim}).addTo(map);
@@ -450,30 +433,26 @@ function prosesTitik(lat,lng){
   lng_verval.value=lng;
   hitungJarak();
 }
+
 function hitungJarak(){
-  if(!lat_awal.value||!lng_awal.value||!lat_verval.value||!lng_verval.value) return;
+  if(!lat_awal.value||!lng_awal.value) return;
   const R=6371000;
   const dLat=(lat_verval.value-lat_awal.value)*Math.PI/180;
   const dLng=(lng_verval.value-lng_awal.value)*Math.PI/180;
   const a=Math.sin(dLat/2)**2 +
-    Math.cos(lat_awal.value*Math.PI/180)*Math.cos(lat_verval.value*Math.PI/180)*
+    Math.cos(lat_awal.value*Math.PI/180) *
+    Math.cos(lat_verval.value*Math.PI/180) *
     Math.sin(dLng/2)**2;
   jarak.value=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))+" m";
 }
 
-/* ================= KIRIM VERVAL ================= */
+/* ================= KIRIM VERVAL (FINAL) ================= */
 window.kirimVerval = async function(){
-  btnSimpan.disabled=true; btnSimpan.innerText="⏳ Menyimpan...";
+  btnSimpan.disabled=true;
+  btnSimpan.innerText="⏳ Menyimpan...";
+  showLoad();
+
   try{
-    const file=foto_verval.files[0];
-    if(!file) throw new Error("Foto wajib diupload");
-
-    const base64=await new Promise((res,rej)=>{
-      const r=new FileReader();
-      r.onload=()=>res(r.result); r.onerror=rej;
-      r.readAsDataURL(file);
-    });
-
     const payload={
       action:"verval",
       rowIndex:rowIndex.value||"",
@@ -494,34 +473,37 @@ window.kirimVerval = async function(){
       jarak_selisih_meter:jarak.value,
       akurasi_gps_meter:0,
       metode_verifikasi:"GPS",
-      fotoBase64: ""
+      fotoBase64:""
     };
 
-    showLoad();
-  const res = await fetch(SCRIPT_URL, {
-  method: "POST",
-  body: JSON.stringify(payload) // TANPA headers
-});
+    const res = await fetch(SCRIPT_URL,{
+      method:"POST",
+      body: JSON.stringify(payload)
+    });
 
+    const text = await res.text();
+    const j = JSON.parse(text);
 
-
-    hideLoad();
     if(j.status!=="success") throw new Error(j.message||"Gagal simpan");
-    alert("✅ Verval tersimpan");
-    loadTahun(); // refresh data tahun aktif
+
+    alert("✅ VERVAL BERHASIL DISIMPAN");
+    loadTahun();
+
   }catch(e){
-    hideLoad();
     alert("❌ "+e.message);
   }finally{
-    btnSimpan.disabled=false; btnSimpan.innerText="💾 SIMPAN VERVAL";
+    hideLoad();
+    btnSimpan.disabled=false;
+    btnSimpan.innerText="💾 SIMPAN VERVAL";
   }
-}
+};
 
 /* ================= UTIL ================= */
-window.reloadHalaman = function(){ location.reload(); }
+window.reloadHalaman = ()=>location.reload();
 
-}); // DOMContentLoaded
+});
 </script>
+
 
 
 <!-- ============================================================
