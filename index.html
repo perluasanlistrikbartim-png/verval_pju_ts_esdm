@@ -389,13 +389,41 @@ function renderTabel(data){
 }
 
 function renderPeta(data){
-  data.forEach(r=>{
-    if(!r.lat_awal||!r.lng_awal) return;
-    L.marker([r.lat_awal,r.lng_awal],{icon:iconEsdm})
+  layerESDM.clearLayers();
+
+  data.forEach(r => {
+
+    // === Titik ESDM (awal) ===
+    if(r.lat_awal && r.lng_awal){
+      L.marker(
+        [Number(r.lat_awal), Number(r.lng_awal)],
+        { icon: iconEsdm }
+      )
+      .addTo(layerESDM)S
+      .bindPopup(`
+        <b>ESDM ${r.tahun_perolehan}</b><br>
+        ${r.nama_desa_lokasi}<br>
+        ID: ${r.id_barang}
+      `);
+    }
+
+    // === Titik VERVAL (Bartim) ===
+    if(r.lat_verval && r.lng_verval){
+      L.marker(
+        [Number(r.lat_verval), Number(r.lng_verval)],
+        { icon: iconBartim }
+      )
       .addTo(layerESDM)
-      .on("click",()=>pilihTitik(r));
+      .bindPopup(`
+        <b>VERVAL BARTIM ${r.tahun_perolehan}</b><br>
+        ${r.nama_desa_lokasi}<br>
+        Petugas: ${r.petugas_verval || "-"}
+      `);
+    }
+
   });
 }
+
 
 /* ================= PILIH TITIK ================= */
 function pilihTitik(d){
