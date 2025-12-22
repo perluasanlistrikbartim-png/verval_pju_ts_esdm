@@ -494,15 +494,17 @@ window.kirimVerval = async function(){
       jarak_selisih_meter:jarak.value,
       akurasi_gps_meter:0,
       metode_verifikasi:"GPS",
-      fotoBase64:base64
+      fotoBase64: ""
     };
 
     showLoad();
-   const res = await fetch(SCRIPT_URL, {
+  const res = await fetch(SCRIPT_URL, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-  redirect: "follow"
+  mode: "cors",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(payload)
 });
 
 const text = await res.text();
@@ -512,6 +514,7 @@ try {
 } catch {
   throw new Error("Response bukan JSON:\n" + text.substring(0,200));
 }
+
 
     hideLoad();
     if(j.status!=="success") throw new Error(j.message||"Gagal simpan");
