@@ -292,7 +292,9 @@ tr.updated {
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+/* ================= KONFIG ================= */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5nShJ4GUDFNMS24CuaqewhpTepFjzT3wsmi7-UJJiy8ZwgdYsRe0CATPuNuvdh_2T-g/exec";
+const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
 /* ================= DOM ================= */
 const tahunSelect = document.getElementById("tahunSelect");
@@ -309,7 +311,6 @@ const lng_awal = document.getElementById("lng_awal");
 const lat_verval = document.getElementById("lat_verval");
 const lng_verval = document.getElementById("lng_verval");
 const petugas = document.getElementById("petugas");
-const status_validasi = document.getElementById("status_validasi");
 const status_fisik = document.getElementById("status_fisik");
 const nama_narasumber = document.getElementById("nama_narasumber");
 const ket_wawancara = document.getElementById("ket_wawancara");
@@ -317,6 +318,9 @@ const catatan = document.getElementById("catatan");
 const jarak = document.getElementById("jarak");
 const foto_verval = document.getElementById("foto_verval");
 const btnSimpan = document.getElementById("btnSimpan");
+
+const latManual = document.getElementById("latManual");
+const lngManual = document.getElementById("lngManual");
 
 /* ================= LOADING ================= */
 function showLoad(){ loading.style.visibility="visible"; }
@@ -351,7 +355,6 @@ async function loadTahun(){
   try{
     const res = await fetch(`${SCRIPT_URL}?year=${tahun}`);
     const json = await res.json();
-
     if(json.status !== "success") throw json.message;
 
     renderTabel(json.data);
@@ -371,10 +374,10 @@ function renderTabel(data){
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
       <td>
-        ${r.lat_awal ? 
-        `<a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
-          📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
-        </a>` : "-"}
+        ${r.lat_awal ? `
+          <a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
+            📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
+          </a>` : "-"}
       </td>
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
@@ -404,81 +407,51 @@ function pilihTitik(d){
   lat_awal.value=d.lat_awal;
   lng_awal.value=d.lng_awal;
 }
-/* ================= MANUAL & GPS ================= */
 
-// ambil DOM manual input
-const latManual = document.getElementById("latManual");
-const lngManual = document.getElementById("lngManual");
-
+/* ================= GPS & MANUAL ================= */
 window.ambilLokasi = function(){
-  if(!navigator.geolocation){
-    alert("GPS tidak tersedia");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      prosesTitik(pos.coords.latitude, pos.coords.longitude);
-    },
-    err => {
-      alert("Gagal ambil GPS: " + err.message);
-    },
-    { enableHighAccuracy:true, timeout:10000 }
-  );
+  if(!navigator.geolocation) return alert("GPS tidak tersedia");
+  navigator.geolocation.getCurrentPosition(p=>{
+    prosesTitik(p.coords.latitude,p.coords.longitude);
+  });
 };
 
 window.prosesManual = function(){
-  const lat = parseFloat(latManual.value);
-  const lng = parseFloat(lngManual.value);
-
-  if(isNaN(lat) || isNaN(lng)){
-    alert("Koordinat manual tidak valid");
-    return;
-  }
-
-  prosesTitik(lat, lng);
+  const lat=parseFloat(latManual.value);
+  const lng=parseFloat(lngManual.value);
+  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
+  prosesTitik(lat,lng);
 };
 
-function prosesTitik(lat, lng){
+function prosesTitik(lat,lng){
   if(markerSaya) map.removeLayer(markerSaya);
-
-  markerSaya = L.marker([lat,lng], {icon:iconBartim})
-    .addTo(map);
-
-  map.setView([lat,lng], 17);
-
-  lat_verval.value = lat;
-  lng_verval.value = lng;
-
+  markerSaya=L.marker([lat,lng],{icon:iconBartim}).addTo(map);
+  map.setView([lat,lng],17);
+  lat_verval.value=lat;
+  lng_verval.value=lng;
   hitungJarak();
 }
 
 function hitungJarak(){
-  if(!lat_awal.value || !lng_awal.value) return;
-
-  const R = 6371000;
-  const dLat = (lat_verval.value - lat_awal.value) * Math.PI/180;
-  const dLng = (lng_verval.value - lng_awal.value) * Math.PI/180;
-
-  const a =
-    Math.sin(dLat/2)**2 +
-    Math.cos(lat_awal.value*Math.PI/180) *
-    Math.cos(lat_verval.value*Math.PI/180) *
+  if(!lat_awal.value||!lng_awal.value) return;
+  const R=6371000;
+  const dLat=(lat_verval.value-lat_awal.value)*Math.PI/180;
+  const dLng=(lng_verval.value-lng_awal.value)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2 +
+    Math.cos(lat_awal.value*Math.PI/180)*Math.cos(lat_verval.value*Math.PI/180)*
     Math.sin(dLng/2)**2;
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  jarak.value = Math.round(R*c) + " m";
+  jarak.value=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))+" m";
 }
 
-/* ================= SIMPAN VERVAL (TINJU STYLE) ================= */
+/* ================= SIMPAN VERVAL (FINAL – PROXY) ================= */
 window.kirimVerval = async function(){
   btnSimpan.disabled=true;
   btnSimpan.innerText="⏳ Menyimpan...";
   try{
-    const file = foto_verval.files[0];
+    const file=foto_verval.files[0];
     if(!file) throw "Foto wajib";
 
-    const base64 = await new Promise(r=>{
+    const base64=await new Promise(r=>{
       const fr=new FileReader();
       fr.onload=()=>r(fr.result);
       fr.readAsDataURL(file);
@@ -497,10 +470,14 @@ window.kirimVerval = async function(){
       fotoBase64:base64
     };
 
-    const res = await fetch(SCRIPT_URL,{
-      method:"POST",
-      body:JSON.stringify(payload)
-    });
+    const res = await fetch(
+      PROXY + encodeURIComponent(SCRIPT_URL),
+      {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(payload)
+      }
+    );
 
     const json = await res.json();
     if(json.status!=="success") throw json.message;
@@ -520,11 +497,6 @@ window.reloadHalaman = ()=>location.reload();
 
 });
 </script>
-
-
-
-
-
 
 <!-- ============================================================
      ⚡ FOOTER PREMIUM
