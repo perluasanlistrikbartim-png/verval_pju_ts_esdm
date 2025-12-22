@@ -404,6 +404,71 @@ function pilihTitik(d){
   lat_awal.value=d.lat_awal;
   lng_awal.value=d.lng_awal;
 }
+/* ================= MANUAL & GPS ================= */
+
+// ambil DOM manual input
+const latManual = document.getElementById("latManual");
+const lngManual = document.getElementById("lngManual");
+
+window.ambilLokasi = function(){
+  if(!navigator.geolocation){
+    alert("GPS tidak tersedia");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      prosesTitik(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      alert("Gagal ambil GPS: " + err.message);
+    },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+};
+
+window.prosesManual = function(){
+  const lat = parseFloat(latManual.value);
+  const lng = parseFloat(lngManual.value);
+
+  if(isNaN(lat) || isNaN(lng)){
+    alert("Koordinat manual tidak valid");
+    return;
+  }
+
+  prosesTitik(lat, lng);
+};
+
+function prosesTitik(lat, lng){
+  if(markerSaya) map.removeLayer(markerSaya);
+
+  markerSaya = L.marker([lat,lng], {icon:iconBartim})
+    .addTo(map);
+
+  map.setView([lat,lng], 17);
+
+  lat_verval.value = lat;
+  lng_verval.value = lng;
+
+  hitungJarak();
+}
+
+function hitungJarak(){
+  if(!lat_awal.value || !lng_awal.value) return;
+
+  const R = 6371000;
+  const dLat = (lat_verval.value - lat_awal.value) * Math.PI/180;
+  const dLng = (lng_verval.value - lng_awal.value) * Math.PI/180;
+
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat_awal.value*Math.PI/180) *
+    Math.cos(lat_verval.value*Math.PI/180) *
+    Math.sin(dLng/2)**2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  jarak.value = Math.round(R*c) + " m";
+}
 
 /* ================= SIMPAN VERVAL (TINJU STYLE) ================= */
 window.kirimVerval = async function(){
