@@ -176,6 +176,11 @@ tr.updated {
 .readonly { background:#061325;color:#89a8c7; }
 .hidden { display:none; }
 
+   tr.selected {
+  background: rgba(0, 234, 255, 0.25) !important;
+  box-shadow: inset 0 0 12px #00eaff;
+}
+
 </style>
 </head>
 
@@ -370,58 +375,80 @@ async function loadTahun(){
 /* ================= RENDER ================= */
 function renderTabel(data){
   tabelEsdm.querySelector("tbody").innerHTML = data.map(r=>`
-    <tr>
+    <tr id="row-${r.rowIndex}">
       <td>${r.id_barang}</td>
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
       <td>
         ${r.lat_awal ? `
-          <a target="_blank" href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
+          <a target="_blank"
+             href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
             📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
           </a>` : "-"}
       </td>
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
       <td>${r.catatan_fisik||""}</td>
-      <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+      <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
       <td>${r.waktu_simpan||""}</td>
     </tr>
   `).join("");
 }
+function selectRow(rowIndex){
+  // hapus highlight lama
+  document
+    .querySelectorAll("#tabelEsdm tbody tr")
+    .forEach(tr => tr.classList.remove("selected"));
+
+  const tr = document.getElementById("row-" + rowIndex);
+  if(tr){
+    tr.classList.add("selected");
+    tr.scrollIntoView({ behavior:"smooth", block:"center" });
+  }
+}
+
 
 function renderPeta(data){
   layerESDM.clearLayers();
 
   data.forEach(r => {
 
-    /* === MARKER ESDM (WAJIB BISA DIKLIK) === */
+    /* === MARKER ESDM (TARGET AWAL) === */
     if(r.lat_awal && r.lng_awal){
       const mEsdm = L.marker(
         [Number(r.lat_awal), Number(r.lng_awal)],
         { icon: iconEsdm }
-      )
-      .addTo(layerESDM)
-      .bindTooltip(
+      ).addTo(layerESDM);
+
+      // tooltip ringan (tidak permanen)
+      mEsdm.bindTooltip(
         `ESDM ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
-        { permanent: false, direction: "top" }
-      )
-      .on("click", () => pilihTitik(r));   // ⬅️ INI KUNCI UTAMA
+        { direction: "top", opacity: 0.9 }
+      );
+
+      // ⬇️ KUNCI UTAMA: klik marker = pilih data
+      mEsdm.on("click", () => {
+        pilihTitik(r);          // munculkan form + isi data
+        selectRow(r.rowIndex);  // sorot & scroll tabel
+      });
     }
 
-    /* === MARKER VERVAL (BARTIM) === */
+    /* === MARKER VERVAL (HASIL BARTIM) === */
     if(r.lat_verval && r.lng_verval){
-      L.marker(
+      const mVerval = L.marker(
         [Number(r.lat_verval), Number(r.lng_verval)],
         { icon: iconBartim }
-      )
-      .addTo(layerESDM)
-      .bindTooltip(
+      ).addTo(layerESDM);
+
+      mVerval.bindTooltip(
         `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
-        { permanent: false, direction: "top" }
+        { direction: "top", opacity: 0.9 }
       );
     }
+
   });
 }
+
 
 
 
