@@ -437,18 +437,27 @@ function renderPeta(data){
       });
     }
 
-    /* === MARKER VERVAL (HASIL BARTIM) === */
-    if(r.lat_verval && r.lng_verval){
-      const mVerval = L.marker(
-        [Number(r.lat_verval), Number(r.lng_verval)],
-        { icon: iconBartim }
-      ).addTo(layerESDM);
+    // ===== MARKER HASIL VERVAL (BARTIM) =====
+const latV = Number(r.lat_verval);
+const lngV = Number(r.lng_verval);
 
-      mVerval.bindTooltip(
-        `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
-        { direction: "top", opacity: 0.9 }
-      );
-    }
+if (
+  !isNaN(latV) &&
+  !isNaN(lngV) &&
+  String(r.status_validasi).toUpperCase() === "TERVERIFIKASI"
+){
+  const mVerval = L.marker(
+    [latV, lngV],
+    { icon: iconBartim }
+  ).addTo(layerESDM);
+
+  mVerval.bindTooltip(
+    `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+    { direction: "top", opacity: 0.9 }
+  );
+}
+
+
 
   });
 }
