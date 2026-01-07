@@ -417,47 +417,43 @@ function renderPeta(data){
 
   data.forEach(r => {
 
-    /* === MARKER ESDM (TARGET AWAL) === */
+    // ===== MARKER ESDM (TARGET AWAL) =====
     if(r.lat_awal && r.lng_awal){
       const mEsdm = L.marker(
         [Number(r.lat_awal), Number(r.lng_awal)],
         { icon: iconEsdm }
       ).addTo(layerESDM);
 
-      // tooltip ringan (tidak permanen)
       mEsdm.bindTooltip(
         `ESDM ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
         { direction: "top", opacity: 0.9 }
       );
 
-      // ⬇️ KUNCI UTAMA: klik marker = pilih data
       mEsdm.on("click", () => {
-        pilihTitik(r);          // munculkan form + isi data
-        selectRow(r.rowIndex);  // sorot & scroll tabel
+        pilihTitik(r);
+        selectRow(r.rowIndex);
       });
     }
 
     // ===== MARKER HASIL VERVAL (BARTIM) =====
-const latV = Number(r.lat_verval);
-const lngV = Number(r.lng_verval);
+    const latV = Number(r.lat_verval);
+    const lngV = Number(r.lng_verval);
 
-if (
-  !isNaN(latV) &&
-  !isNaN(lngV) &&
-  String(r.status_validasi).toUpperCase() === "TERVERIFIKASI"
-){
-  const mVerval = L.marker(
-    [latV, lngV],
-    { icon: iconBartim }
-  ).addTo(layerESDM);
+    if (
+      !isNaN(latV) &&
+      !isNaN(lngV) &&
+      String(r.status_validasi).toUpperCase() === "TERVERIFIKASI"
+    ){
+      const mVerval = L.marker(
+        [latV, lngV],
+        { icon: iconBartim }
+      ).addTo(layerESDM);
 
-  mVerval.bindTooltip(
-    `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
-    { direction: "top", opacity: 0.9 }
-  );
-}
-
-
+      mVerval.bindTooltip(
+        `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+        { direction: "top", opacity: 0.9 }
+      );
+    }
 
   });
 }
