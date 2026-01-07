@@ -312,6 +312,7 @@ const lat_verval = document.getElementById("lat_verval");
 const lng_verval = document.getElementById("lng_verval");
 const petugas = document.getElementById("petugas");
 const status_fisik = document.getElementById("status_fisik");
+const status_validasi = document.getElementById("status_validasi");
 const nama_narasumber = document.getElementById("nama_narasumber");
 const ket_wawancara = document.getElementById("ket_wawancara");
 const catatan = document.getElementById("catatan");
@@ -393,49 +394,54 @@ function renderPeta(data){
 
   data.forEach(r => {
 
-    // === Titik ESDM (awal) ===
+    /* === MARKER ESDM (WAJIB BISA DIKLIK) === */
     if(r.lat_awal && r.lng_awal){
-      L.marker(
+      const mEsdm = L.marker(
         [Number(r.lat_awal), Number(r.lng_awal)],
         { icon: iconEsdm }
       )
       .addTo(layerESDM)
-      .bindPopup(`
-        <b>ESDM ${r.tahun_perolehan}</b><br>
-        ${r.nama_desa_lokasi}<br>
-        ID: ${r.id_barang}
-      `);
+      .bindTooltip(
+        `ESDM ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+        { permanent: false, direction: "top" }
+      )
+      .on("click", () => pilihTitik(r));   // ⬅️ INI KUNCI UTAMA
     }
 
-    // === Titik VERVAL (Bartim) ===
+    /* === MARKER VERVAL (BARTIM) === */
     if(r.lat_verval && r.lng_verval){
       L.marker(
         [Number(r.lat_verval), Number(r.lng_verval)],
         { icon: iconBartim }
       )
       .addTo(layerESDM)
-      .bindPopup(`
-        <b>VERVAL BARTIM ${r.tahun_perolehan}</b><br>
-        ${r.nama_desa_lokasi}<br>
-        Petugas: ${r.petugas_verval || "-"}
-      `);
+      .bindTooltip(
+        `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+        { permanent: false, direction: "top" }
+      );
     }
-
   });
 }
+
 
 
 
 /* ================= PILIH TITIK ================= */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
-  rowIndex.value=d.rowIndex;
-  id_barang.value=d.id_barang;
-  nama_kecamatan.value=d.nama_kecamatan;
-  nama_desa_lokasi.value=d.nama_desa_lokasi;
-  lat_awal.value=d.lat_awal;
-  lng_awal.value=d.lng_awal;
+
+  rowIndex.value = d.rowIndex;
+  id_barang.value = d.id_barang;
+  nama_kecamatan.value = d.nama_kecamatan;
+  nama_desa_lokasi.value = d.nama_desa_lokasi;
+
+  lat_awal.value = d.lat_awal;
+  lng_awal.value = d.lng_awal;
+
+  // otomatis isi status
+  status_validasi.value = "Terverifikasi";
 }
+
 
 /* ================= GPS & MANUAL ================= */
 window.ambilLokasi = function(){
@@ -486,18 +492,26 @@ window.kirimVerval = async function(){
       fr.readAsDataURL(file);
     });
 
-    const payload={
-      rowIndex:rowIndex.value,
-      lat_verval:lat_verval.value,
-      lng_verval:lng_verval.value,
-      petugas_verval:petugas.value,
-      status_fisik:status_fisik.value,
-      nama_narasumber:nama_narasumber.value,
-      keterangan_wawancara:ket_wawancara.value,
-      catatan_fisik:catatan.value,
-      jarak_selisih_meter:jarak.value,
-      fotoBase64:base64
-    };
+   const payload = {
+  rowIndex: rowIndex.value,
+
+  // ⬇️ WAJIB agar tidak salah tahun
+  tahun_perolehan: tahunSelect.value,
+
+  // ⬇️ WAJIB agar kolom status tidak kosong
+  status_validasi: "Terverifikasi",
+
+  lat_verval: lat_verval.value,
+  lng_verval: lng_verval.value,
+  petugas_verval: petugas.value,
+  status_fisik: status_fisik.value,
+  nama_narasumber: nama_narasumber.value,
+  keterangan_wawancara: ket_wawancara.value,
+  catatan_fisik: catatan.value,
+  jarak_selisih_meter: jarak.value,
+  fotoBase64: base64
+};
+
 
     const res = await fetch(
       PROXY + encodeURIComponent(SCRIPT_URL),
