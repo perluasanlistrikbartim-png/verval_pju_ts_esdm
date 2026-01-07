@@ -305,9 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5nShJ4GUDFNMS24CuaqewhpTepFjzT3wsmi7-UJJiy8ZwgdYsRe0CATPuNuvdh_2T-g/exec";
 const PROXY = "https://broad-queen-be12.perluasanlistrik-bartim.workers.dev/?url=";
 
-/* ================= GLOBAL STATE (KUNCI UTAMA) ================= */
-let CURRENT_ROW_INDEX = null;
-
 /* ================= DOM ================= */
 const tahunSelect = document.getElementById("tahunSelect");
 const tabelEsdm   = document.getElementById("tabelEsdm");
@@ -336,8 +333,8 @@ const latManual = document.getElementById("latManual");
 const lngManual = document.getElementById("lngManual");
 
 /* ================= LOADING ================= */
-const showLoad = ()=>loading.style.visibility="visible";
-const hideLoad = ()=>loading.style.visibility="hidden";
+function showLoad(){ loading.style.visibility="visible"; }
+function hideLoad(){ loading.style.visibility="hidden"; }
 
 /* ================= MAP ================= */
 const map = L.map("map").setView([-2.13,115.10],10);
@@ -355,7 +352,7 @@ const iconBartim = L.icon({
 
 let markerSaya=null;
 
-/* ================= LOAD DATA ================= */
+/* ================= LOAD DATA PER TAHUN ================= */
 tahunSelect.onchange = loadTahun;
 
 async function loadTahun(){
@@ -368,160 +365,236 @@ async function loadTahun(){
   try{
     const res = await fetch(`${SCRIPT_URL}?year=${tahun}`);
     const json = await res.json();
-    if(json.status!=="success") throw json.message;
+    if(json.status !== "success") throw json.message;
 
     renderTabel(json.data);
     renderPeta(json.data);
-  }catch(e){
-    alert("❌ "+e);
+  }catch(err){
+    alert("❌ Gagal load data: " + err);
   }finally{
     hideLoad();
   }
 }
 
-/* ================= TABLE ================= */
+/* ================= RENDER ================= */
 function renderTabel(data){
   tabelEsdm.querySelector("tbody").innerHTML = data.map(r=>`
     <tr id="row-${r.rowIndex}">
       <td>${r.id_barang}</td>
       <td>${r.nama_kecamatan}</td>
       <td>${r.nama_desa_lokasi}</td>
-      <td>${r.lat_awal?`📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}`:"-"}</td>
+      <td>
+        ${r.lat_awal ? `
+          <a target="_blank"
+             href="https://maps.google.com/?q=${r.lat_awal},${r.lng_awal}">
+            📍 ${Number(r.lat_awal).toFixed(6)}, ${Number(r.lng_awal).toFixed(6)}
+          </a>` : "-"}
+      </td>
       <td>${r.status_validasi||""}</td>
       <td>${r.keterangan_wawancara||""}</td>
       <td>${r.catatan_fisik||""}</td>
-      <td>${r.link_foto_verval?`<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
+      <td>${r.link_foto_verval ? `<a href="${r.link_foto_verval}" target="_blank">📷</a>`:"-"}</td>
       <td>${r.waktu_simpan||""}</td>
     </tr>
   `).join("");
 }
+function selectRow(rowIndex){
+  // hapus highlight lama
+  document
+    .querySelectorAll("#tabelEsdm tbody tr")
+    .forEach(tr => tr.classList.remove("selected"));
 
-function selectRow(idx){
-  document.querySelectorAll("#tabelEsdm tr").forEach(r=>r.classList.remove("selected"));
-  const tr=document.getElementById("row-"+idx);
+  const tr = document.getElementById("row-" + rowIndex);
   if(tr){
     tr.classList.add("selected");
-    tr.scrollIntoView({behavior:"smooth",block:"center"});
+    tr.scrollIntoView({ behavior:"smooth", block:"center" });
   }
 }
 
-/* ================= MAP ================= */
+
 function renderPeta(data){
   layerESDM.clearLayers();
 
-  data.forEach(r=>{
-    if(r.lat_awal && r.lng_awal){
-      const m=L.marker([+r.lat_awal,+r.lng_awal],{icon:iconEsdm})
-        .addTo(layerESDM)
-        .bindTooltip(`ESDM ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`);
+  data.forEach(r => {
 
-      m.on("click",()=>{
+    // ===== MARKER ESDM (TARGET AWAL) =====
+    if(r.lat_awal && r.lng_awal){
+      const mEsdm = L.marker(
+        [Number(r.lat_awal), Number(r.lng_awal)],
+        { icon: iconEsdm }
+      ).addTo(layerESDM);
+
+      mEsdm.bindTooltip(
+        `ESDM ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+        { direction: "top", opacity: 0.9 }
+      );
+
+      mEsdm.on("click", () => {
         pilihTitik(r);
         selectRow(r.rowIndex);
       });
     }
 
-    if(r.status_validasi==="TERVERIFIKASI" && r.lat_verval && r.lng_verval){
-      L.marker([+r.lat_verval,+r.lng_verval],{icon:iconBartim})
-        .addTo(layerESDM)
-        .bindTooltip(`VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`);
+    // ===== MARKER HASIL VERVAL (BARTIM) =====
+    const latV = Number(r.lat_verval);
+    const lngV = Number(r.lng_verval);
+
+    if (
+      !isNaN(latV) &&
+      !isNaN(lngV) &&
+      String(r.status_validasi).toUpperCase() === "TERVERIFIKASI"
+    ){
+      const mVerval = L.marker(
+        [latV, lngV],
+        { icon: iconBartim }
+      ).addTo(layerESDM);
+
+      mVerval.bindTooltip(
+        `VERVAL ${r.tahun_perolehan}<br>${r.nama_desa_lokasi}`,
+        { direction: "top", opacity: 0.9 }
+      );
     }
+
   });
 }
 
-/* ================= PILIH ================= */
+
+
+
+
+/* ================= PILIH TITIK ================= */
 function pilihTitik(d){
   formVerval.classList.remove("hidden");
 
-  CURRENT_ROW_INDEX = d.rowIndex;
   rowIndex.value = d.rowIndex;
-
   id_barang.value = d.id_barang;
   nama_kecamatan.value = d.nama_kecamatan;
   nama_desa_lokasi.value = d.nama_desa_lokasi;
+
   lat_awal.value = d.lat_awal;
   lng_awal.value = d.lng_awal;
 
-  status_validasi.value = "TERVERIFIKASI";
+  // otomatis isi status
+  status_validasi.value = "Terverifikasi";
 }
 
-/* ================= GPS ================= */
-window.ambilLokasi=()=>{
+
+/* ================= GPS & MANUAL ================= */
+window.ambilLokasi = function(){
+  if(!navigator.geolocation) return alert("GPS tidak tersedia");
   navigator.geolocation.getCurrentPosition(p=>{
     prosesTitik(p.coords.latitude,p.coords.longitude);
   });
 };
-window.prosesManual=()=>{
-  const lat=+latManual.value,lng=+lngManual.value;
-  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat salah");
+
+window.prosesManual = function(){
+  const lat=parseFloat(latManual.value);
+  const lng=parseFloat(lngManual.value);
+  if(isNaN(lat)||isNaN(lng)) return alert("Koordinat tidak valid");
   prosesTitik(lat,lng);
 };
 
 function prosesTitik(lat,lng){
+  lat = Number(lat);
+  lng = Number(lng);
+
+  if(isNaN(lat) || isNaN(lng)){
+    alert("Koordinat tidak valid");
+    return;
+  }
+
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya=L.marker([lat,lng],{icon:iconBartim}).addTo(map);
+
+  markerSaya = L.marker([lat,lng], {icon:iconBartim}).addTo(map);
   map.setView([lat,lng],17);
-  lat_verval.value=lat.toFixed(6);
-  lng_verval.value=lng.toFixed(6);
+
+  lat_verval.value = lat.toFixed(6);
+  lng_verval.value = lng.toFixed(6);
+
   hitungJarak();
 }
 
+
 function hitungJarak(){
-  if(!lat_awal.value) return;
+  if(!lat_awal.value||!lng_awal.value) return;
   const R=6371000;
   const dLat=(lat_verval.value-lat_awal.value)*Math.PI/180;
   const dLng=(lng_verval.value-lng_awal.value)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+
+  const a=Math.sin(dLat/2)**2 +
     Math.cos(lat_awal.value*Math.PI/180)*Math.cos(lat_verval.value*Math.PI/180)*
     Math.sin(dLng/2)**2;
   jarak.value=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))+" m";
 }
 
-/* ================= SIMPAN ================= */
-window.kirimVerval=async()=>{
-  if(!CURRENT_ROW_INDEX) return alert("❌ Pilih titik ESDM dulu");
-  if(!foto_verval.files[0]) return alert("❌ Foto wajib");
-
+/* ================= SIMPAN VERVAL (FINAL – PROXY) ================= */
+window.kirimVerval = async function(){
   btnSimpan.disabled=true;
   btnSimpan.innerText="⏳ Menyimpan...";
+  try{
+    const file=foto_verval.files[0];
+    if(!file) throw "Foto wajib";
 
-  const base64=await new Promise(r=>{
-    const fr=new FileReader();
-    fr.onload=()=>r(fr.result);
-    fr.readAsDataURL(foto_verval.files[0]);
-  });
+    const base64=await new Promise(r=>{
+      const fr=new FileReader();
+      fr.onload=()=>r(fr.result);
+      fr.readAsDataURL(file);
+    });
 
-  const payload={
-    rowIndex: CURRENT_ROW_INDEX,
-    status_validasi:"TERVERIFIKASI",
-    lat_verval:lat_verval.value,
-    lng_verval:lng_verval.value,
-    petugas_verval:petugas.value,
-    status_fisik:status_fisik.value,
-    metode_verifikasi:"Lapangan",
-    nama_narasumber:nama_narasumber.value,
-    keterangan_wawancara:ket_wawancara.value,
-    catatan_fisik:catatan.value,
-    jarak_selisih_meter:jarak.value,
-    fotoBase64:base64
-  };
+  const payload = {
+  // ⬇️ KUNCI UPDATE BARIS
+  rowIndex: rowIndex.value,
 
-  const res=await fetch(PROXY+encodeURIComponent(SCRIPT_URL),{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
+  // ⬇️ STATUS KONSISTEN DENGAN GAS
+  status_validasi: "TERVERIFIKASI",
 
-  const json=await res.json();
-  if(json.status!=="success") alert(json.message);
-  else{
+  // ⬇️ KOORDINAT (ANGKA, BUKAN TEKS)
+  lat_verval: lat_verval.value,
+  lng_verval: lng_verval.value,
+
+  // ⬇️ DATA VERIFIKASI
+  petugas_verval: petugas.value,
+  status_fisik: status_fisik.value,
+  metode_verifikasi: "Lapangan",
+
+  // ⬇️ WAWANCARA
+  nama_narasumber: nama_narasumber.value,
+  keterangan_wawancara: ket_wawancara.value,
+  catatan_fisik: catatan.value,
+
+  // ⬇️ JARAK & GPS
+  jarak_selisih_meter: jarak.value,
+  akurasi_gps_meter: "",
+
+  // ⬇️ FOTO
+  fotoBase64: base64
+};
+
+
+
+    const res = await fetch(
+      PROXY + encodeURIComponent(SCRIPT_URL),
+      {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(payload)
+      }
+    );
+
+    const json = await res.json();
+    if(json.status!=="success") throw json.message;
+
     alert("✅ VERVAL tersimpan");
     loadTahun();
-  }
 
-  btnSimpan.disabled=false;
-  btnSimpan.innerText="💾 SIMPAN VERVAL";
+  }catch(e){
+    alert("❌ "+e);
+  }finally{
+    btnSimpan.disabled=false;
+    btnSimpan.innerText="💾 SIMPAN VERVAL";
+  }
 };
+
+window.reloadHalaman = ()=>location.reload();
 
 });
 </script>
