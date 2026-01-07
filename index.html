@@ -540,25 +540,35 @@ window.kirimVerval = async function(){
       fr.readAsDataURL(file);
     });
 
-   const payload = {
+  const payload = {
+  // ⬇️ KUNCI UPDATE BARIS
   rowIndex: rowIndex.value,
 
-  // ⬇️ WAJIB agar tidak salah tahun
-  tahun_perolehan: tahunSelect.value,
+  // ⬇️ STATUS KONSISTEN DENGAN GAS
+  status_validasi: "TERVERIFIKASI",
 
-  // ⬇️ WAJIB agar kolom status tidak kosong
-  status_validasi: "Terverifikasi",
-
+  // ⬇️ KOORDINAT (ANGKA, BUKAN TEKS)
   lat_verval: lat_verval.value,
   lng_verval: lng_verval.value,
+
+  // ⬇️ DATA VERIFIKASI
   petugas_verval: petugas.value,
   status_fisik: status_fisik.value,
+  metode_verifikasi: "Lapangan",
+
+  // ⬇️ WAWANCARA
   nama_narasumber: nama_narasumber.value,
   keterangan_wawancara: ket_wawancara.value,
   catatan_fisik: catatan.value,
+
+  // ⬇️ JARAK & GPS
   jarak_selisih_meter: jarak.value,
+  akurasi_gps_meter: "",
+
+  // ⬇️ FOTO
   fotoBase64: base64
 };
+
 
 
     const res = await fetch(
