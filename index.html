@@ -442,7 +442,7 @@ function renderPeta(data){
     if (
       !isNaN(latV) &&
       !isNaN(lngV) &&
-      String(r.status_validasi).toUpperCase() === "TERVERIFIKASI"
+      String(r.status_validasi||"").toUpperCase().includes("VERIFIKASI")
     ){
       const mVerval = L.marker(
         [latV, lngV],
