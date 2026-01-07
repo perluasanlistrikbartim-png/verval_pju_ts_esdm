@@ -180,6 +180,10 @@ tr.updated {
   background: rgba(0, 234, 255, 0.25) !important;
   box-shadow: inset 0 0 12px #00eaff;
 }
+tr.selected {
+  background: #18ff9c33 !important;
+  outline: 2px solid #18ff9c;
+}
 
 </style>
 </head>
@@ -486,13 +490,25 @@ window.prosesManual = function(){
 };
 
 function prosesTitik(lat,lng){
+  lat = Number(lat);
+  lng = Number(lng);
+
+  if(isNaN(lat) || isNaN(lng)){
+    alert("Koordinat tidak valid");
+    return;
+  }
+
   if(markerSaya) map.removeLayer(markerSaya);
-  markerSaya=L.marker([lat,lng],{icon:iconBartim}).addTo(map);
+
+  markerSaya = L.marker([lat,lng], {icon:iconBartim}).addTo(map);
   map.setView([lat,lng],17);
-  lat_verval.value=lat;
-  lng_verval.value=lng;
+
+  lat_verval.value = lat.toFixed(6);
+  lng_verval.value = lng.toFixed(6);
+
   hitungJarak();
 }
+
 
 function hitungJarak(){
   if(!lat_awal.value||!lng_awal.value) return;
